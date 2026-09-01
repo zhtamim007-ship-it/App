@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Task Wallet</title>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="firebase-config.js"></script>
+<script src="js/db.js"></script>
 <style>
   :root{
     --blue:#2563eb;
@@ -326,6 +328,115 @@
     white-space:nowrap;
   }
   .toast.show{opacity:1;}
+
+  /* ===== Deposit confirmation popup (address + amount + TrxID) ===== */
+  .dep-modal{
+    background:#fff;border-radius:22px;width:100%;max-width:380px;
+    margin:auto;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.32);
+    animation:depPop .22s cubic-bezier(.2,.9,.3,1.2);
+    max-height:92vh;overflow-y:auto;
+  }
+  @keyframes depPop{from{opacity:0;transform:translateY(18px) scale(.96);}to{opacity:1;transform:none;}}
+  .dep-modal-head{
+    background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;
+    padding:18px 20px 20px;position:relative;text-align:center;
+  }
+  .dep-modal-head .x{
+    position:absolute;top:12px;right:12px;background:rgba(255,255,255,.18);
+    border:none;color:#fff;width:30px;height:30px;border-radius:50%;
+    font-size:16px;cursor:pointer;line-height:1;
+  }
+  .dep-modal-method{
+    display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);
+    padding:5px 13px;border-radius:20px;font-size:12px;font-weight:700;
+    letter-spacing:.4px;margin-bottom:10px;
+  }
+  .dep-modal-title{font-size:13px;opacity:.82;margin-bottom:2px;}
+  .dep-modal-amount{font-size:32px;font-weight:800;letter-spacing:-.5px;}
+  .dep-modal-body{padding:18px 20px 20px;}
+  .dep-step{
+    display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+    color:var(--blue);margin-bottom:9px;text-transform:uppercase;letter-spacing:.5px;
+  }
+  .dep-step .num{
+    width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;
+  }
+  .dep-instruction{
+    background:#fffbeb;border:1px solid #fde68a;border-radius:12px;
+    padding:11px 13px;font-size:12.5px;line-height:1.65;color:#92400e;margin-bottom:14px;
+  }
+  .copy-row{
+    display:flex;align-items:center;gap:9px;background:#f1f5f9;
+    border:1.5px dashed #94a3b8;border-radius:13px;padding:12px 13px;margin-bottom:10px;
+  }
+  .copy-row.amount-row{background:#eff6ff;border-color:#93c5fd;}
+  .copy-row-main{flex:1;min-width:0;}
+  .copy-row-label{
+    font-size:10px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;
+  }
+  .copy-row-value{
+    font-size:16px;font-weight:800;color:var(--ink);
+    word-break:break-all;font-family:'Inter',monospace;line-height:1.35;
+  }
+  .copy-row.amount-row .copy-row-value{color:var(--blue);}
+  .copy-btn{
+    background:var(--blue);color:#fff;border:none;border-radius:9px;
+    padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;
+    flex-shrink:0;display:flex;align-items:center;gap:5px;transition:.15s;
+  }
+  .copy-btn:active{transform:scale(.94);}
+  .copy-btn.copied{background:var(--green);}
+  .trx-required-box{margin-top:16px;padding-top:16px;border-top:1.5px dashed #e2e8f0;}
+  .trx-required-label{
+    font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px;
+    display:flex;align-items:center;gap:5px;
+  }
+  .trx-required-label .req{color:var(--red);}
+  .trx-required-sub{font-size:11.5px;color:var(--muted);margin-bottom:9px;line-height:1.5;}
+  .trx-modal-input{
+    width:100%;padding:13px 14px;border:2px solid #e2e8f0;border-radius:12px;
+    font-size:15px;font-weight:600;font-family:'Inter',sans-serif;
+    outline:none;transition:.15s;box-sizing:border-box;letter-spacing:.4px;
+  }
+  .trx-modal-input:focus{border-color:var(--blue);background:#f8faff;}
+  .trx-modal-input.invalid{border-color:var(--red);background:#fef2f2;}
+  .trx-modal-error{font-size:11.5px;color:var(--red);font-weight:600;margin-top:6px;min-height:15px;}
+  .dep-modal-actions{display:flex;gap:9px;margin-top:16px;}
+  .dep-modal-actions button{
+    flex:1;padding:14px;border:none;border-radius:13px;
+    font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  .dep-cancel-btn{background:#f1f5f9;color:var(--muted);}
+  .dep-submit-btn{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;}
+  .dep-submit-btn:disabled{opacity:.55;cursor:not-allowed;}
+  .dep-warn-note{
+    font-size:11px;color:var(--muted);text-align:center;margin-top:11px;line-height:1.55;
+  }
+
+  /* pending / status chips */
+  .statement-status.pending{background:#fef3c7;color:#a16207;}
+  .statement-status.rejected{background:#fee2e2;color:#dc2626;}
+  .tx-status-chip{
+    font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px;
+    margin-left:6px;letter-spacing:.4px;vertical-align:middle;
+  }
+  .tx-status-chip.pending{background:#fef3c7;color:#a16207;}
+  .tx-status-chip.rejected{background:#fee2e2;color:#dc2626;}
+  .reject-reason{font-size:11px;color:var(--red);margin-top:3px;font-weight:600;}
+
+  /* demo-mode badge */
+  .mode-badge{
+    position:fixed;top:0;left:0;right:0;z-index:9999;text-align:center;
+    font-size:11px;font-weight:700;padding:5px 10px;letter-spacing:.3px;
+    background:#fef3c7;color:#92400e;border-bottom:1px solid #fde68a;
+    font-family:'Inter',sans-serif;
+  }
+  .mode-badge.hidden{display:none;}
+
+  /* method cards built from admin config */
+  .method-card .method-emoji{font-size:26px;line-height:1;margin-bottom:5px;}
   .status-badge{
     text-align:center;
     font-size:10px;
@@ -1199,7 +1310,7 @@
 <!-- Auth gate: Login / Register -->
 <div class="auth-screen" id="authScreen">
   <div class="auth-card">
-    <div class="auth-logo">ðŸ’¼</div>
+    <div class="auth-logo">💼</div>
     <div class="auth-app-name" id="authAppNameEl">Task Wallet</div>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tabLoginBtn" onclick="switchAuthTab('login')">Login</button>
@@ -1223,7 +1334,7 @@
     <div id="registerForm" style="display:none;">
       <div class="field">
         <label>Full Name</label>
-        <input type="text" id="regName" placeholder="à¦¯à§‡à¦®à¦¨: Rahim Ahmed" maxlength="40">
+        <input type="text" id="regName" placeholder="যেমন: Rahim Ahmed" maxlength="40">
       </div>
       <div class="field">
         <label>Phone Number</label>
@@ -1241,7 +1352,7 @@
       <button class="primary-btn" onclick="doRegister()">Create Account</button>
     </div>
 
-    <div class="auth-footnote">Static prototype â€” accounts exist only for this session and are not saved anywhere.</div>
+    <div class="auth-footnote">আপনার তথ্য নিরাপদে সংরক্ষণ করা হয়। ডিপোজিট রিকোয়েস্ট অ্যাডমিন যাচাই করে অনুমোদন দেন।</div>
   </div>
 </div>
 
@@ -1252,26 +1363,26 @@
     <div class="header-card">
       <div class="header-top">
         <div class="user-info" onclick="openSheet('registerSheet')" style="cursor:pointer;">
-          <div class="avatar">ðŸ§‘</div>
+          <div class="avatar">🧑</div>
           <div>
             <div class="welcome-text">Welcome back,</div>
             <div class="username" id="usernameDisplay">Guest User</div>
           </div>
         </div>
-        <button class="bell" onclick="showToast('à¦•à§‹à¦¨à§‹ à¦¨à¦¤à§à¦¨ à¦¨à§‹à¦Ÿà¦¿à¦«à¦¿à¦•à§‡à¦¶à¦¨ à¦¨à§‡à¦‡')">ðŸ””</button>
+        <button class="bell" onclick="showToast('কোনো নতুন নোটিফিকেশন নেই')">🔔</button>
       </div>
       <div class="balance-block">
         <div class="balance-label">CURRENT BALANCE</div>
-        <div class="balance-value" id="balanceDisplay"><span class="tk">à§³</span>100.00</div>
+        <div class="balance-value" id="balanceDisplay"><span class="tk">৳</span>100.00</div>
       </div>
     </div>
 
     <!-- banner -->
     <div class="banner" onclick="openSheet('depositSheet')">
-      <div class="banner-title" id="bannerTitleEl">à¦…à§à¦¯à¦¾à¦•à¦¾à¦‰à¦¨à§à¦Ÿ à¦–à§à¦²à¦²à§‡ à¦ªà¦¾à¦¬à§‡à¦¨</div>
-      <div class="banner-sub"><span class="tag">SPECIAL OFFER!</span> à§§à§¦à§¦ à¦Ÿà¦¾à¦•à¦¾ à¦¬à§‹à¦¨à¦¾à¦¸ <span class="tag orange">SPECIAL OFFER!</span></div>
-      <div class="banner-big" id="bannerSub1El">à§¨à§¦à§¦à§¦ à¦Ÿà¦¾à¦•à¦¾ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à¦•à¦°à¦²à§‡</div>
-      <div class="banner-big" id="bannerSub2El">à§«à§¦à§¦ à¦Ÿà¦¾à¦•à¦¾ à¦¬à§‹à¦¨à¦¾à¦¸</div>
+      <div class="banner-title" id="bannerTitleEl">অ্যাকাউন্ট খুললে পাবেন</div>
+      <div class="banner-sub"><span class="tag">SPECIAL OFFER!</span> ১০০ টাকা বোনাস <span class="tag orange">SPECIAL OFFER!</span></div>
+      <div class="banner-big" id="bannerSub1El">২০০০ টাকা ডিপোজিট করলে</div>
+      <div class="banner-big" id="bannerSub2El">৫০০ টাকা বোনাস</div>
     </div>
 
     <!-- actions -->
@@ -1290,35 +1401,35 @@
     <div class="section-title"><span class="bar"></span> Services</div>
     <div class="services-grid">
       <button class="service-card" onclick="openSheet('workSheet'); renderTaskCenter();">
-        <div class="service-icon" style="background:#ede9fe;">ðŸ‘†</div>
+        <div class="service-icon" style="background:#ede9fe;">👆</div>
         <span class="label">Start Work</span>
       </button>
       <button class="service-card" onclick="openSheet('packagesSheet'); renderPackages();">
-        <div class="service-icon" style="background:#dbeafe;">ðŸ“¦</div>
+        <div class="service-icon" style="background:#dbeafe;">📦</div>
         <span class="label">Packages</span>
       </button>
       <button class="service-card" onclick="openSheet('referSheet')">
-        <div class="service-icon" style="background:#dbeafe;">ðŸ‘¥</div>
+        <div class="service-icon" style="background:#dbeafe;">👥</div>
         <span class="label">Refer</span>
       </button>
       <button class="service-card" onclick="openSheet('historySheet'); renderStatement();">
-        <div class="service-icon" style="background:#dbeafe;">ðŸ•</div>
+        <div class="service-icon" style="background:#dbeafe;">🕐</div>
         <span class="label">History</span>
       </button>
-      <button class="service-card" onclick="showToast('à¦…à§à¦¯à¦¾à¦ª à¦‡à¦¨à¦¸à§à¦Ÿà¦² à¦²à¦¿à¦‚à¦•')">
-        <div class="service-icon" style="background:#dcfce7;">â–¶ï¸</div>
+      <button class="service-card" onclick="showToast('অ্যাপ ইনস্টল লিংক')">
+        <div class="service-icon" style="background:#dcfce7;">▶️</div>
         <span class="label">App Install</span>
       </button>
       <button class="service-card" onclick="openSheet('supportSheet')">
-        <div class="service-icon" style="background:#dbeafe;">ðŸŽ§</div>
+        <div class="service-icon" style="background:#dbeafe;">🎧</div>
         <span class="label">Support</span>
       </button>
       <button class="service-card" onclick="openSheet('privacySheet')">
-        <div class="service-icon" style="background:#dbeafe;">ðŸ›¡ï¸</div>
+        <div class="service-icon" style="background:#dbeafe;">🛡️</div>
         <span class="label">Privacy</span>
       </button>
       <button class="service-card" onclick="openSheet('logoutSheet')">
-        <div class="service-icon" style="background:#fee2e2;">â»</div>
+        <div class="service-icon" style="background:#fee2e2;">⏻</div>
         <span class="label">Logout</span>
       </button>
     </div>
@@ -1333,19 +1444,19 @@
 <!-- bottom nav -->
 <div class="bottom-nav">
   <button class="nav-item active" id="navHome" onclick="setActiveNav('navHome'); closeAllSheets();">
-    ðŸ  <span>HOME</span><span class="nav-dot"></span>
+    🏠 <span>HOME</span><span class="nav-dot"></span>
   </button>
   <button class="nav-item" id="navDeposit" onclick="setActiveNav('navDeposit'); openSheet('depositSheet');">
-    ðŸ’³ <span>DEPOSIT</span>
+    💳 <span>DEPOSIT</span>
   </button>
   <div class="fab-wrap">
-    <div class="fab" onclick="showToast('à¦¦à§à¦°à§à¦¤ à¦…à§à¦¯à¦¾à¦•à¦¶à¦¨ à¦®à§‡à¦¨à§')">âš¡</div>
+    <div class="fab" onclick="showToast('দ্রুত অ্যাকশন মেনু')">⚡</div>
   </div>
   <button class="nav-item" id="navPackages" onclick="setActiveNav('navPackages'); openSheet('packagesSheet'); renderPackages();">
-    ðŸ“¦ <span>PACKAGES</span>
+    📦 <span>PACKAGES</span>
   </button>
   <button class="nav-item" id="navMenu" onclick="setActiveNav('navMenu'); openSheet('menuSheet');">
-    â˜° <span>MENU</span>
+    ☰ <span>MENU</span>
   </button>
 </div>
 
@@ -1355,17 +1466,17 @@
 <div class="overlay" id="depositSheet">
   <div class="sheet deposit-sheet">
     <div class="deposit-header">
-      <button class="dep-close" onclick="closeSheet('depositSheet')">âœ•</button>
+      <button class="dep-close" onclick="closeSheet('depositSheet')">✕</button>
       <div class="deposit-header-top">
-        <div class="deposit-header-title">ðŸ—‚ï¸ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ</div>
+        <div class="deposit-header-title">🗂️ ডিপোজিট</div>
         <div class="secure-pill">SECURE PAY</div>
       </div>
       <div class="deposit-amount-block">
         <div class="deposit-amount-row">
-          <span class="tk-sym">à§³</span>
+          <span class="tk-sym">৳</span>
           <input type="number" id="depositAmount" placeholder="0" oninput="clearChipSelection()">
         </div>
-        <div class="min-dep-note" id="minDepNoteEl">âš ï¸ à¦¸à¦°à§à¦¬à¦¨à¦¿à¦®à§à¦¨ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à§«à§¦à§¦ à¦Ÿà¦¾à¦•à¦¾</div>
+        <div class="min-dep-note" id="minDepNoteEl">⚠️ সর্বনিম্ন ডিপোজিট ৫০০ টাকা</div>
       </div>
     </div>
 
@@ -1378,29 +1489,10 @@
         <button class="quick-chip" onclick="pickAmount(this,10000)">+10k</button>
       </div>
 
-      <div class="method-label">à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦®à§‡à¦¥à¦¡ à¦¬à¦¾à¦›à§à¦¨</div>
-      <div class="method-grid" id="methodGrid">
-        <div class="method-card" onclick="pickMethod(this,'bKash')">
-          <div class="method-logo bkash-logo" aria-label="bKash logo"><span>b</span><b>K</b><i>âž¤</i></div>
-          <div class="method-name">BKASH</div>
-        </div>
-        <div class="method-card" onclick="pickMethod(this,'Nagad')">
-          <div class="method-logo nagad-logo" aria-label="Nagad logo"><span>â—”</span><b>à¦¨à¦—à¦¦</b></div>
-          <div class="method-name">NAGAD</div>
-        </div>
-      </div>
+      <div class="method-label">পেমেন্ট মেথড বাছুন</div>
+      <div class="method-grid" id="methodGrid"></div>
 
-      <div class="payment-instruction" id="paymentInstruction">
-        <div class="payment-instruction-text" id="paymentInstructionText">à¦ªà§à¦°à¦¿à¦¯à¦¼ à¦—à§à¦°à¦¾à¦¹à¦•, à¦¨à¦¿à¦šà§‡à¦° à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°à§‡ à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¿à¦¯à¦¼à§‡ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦•à¦°à§à¦¨à¥¤ à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¾à¦¨à§‹à¦° à¦ªà¦° à¦¨à¦¿à¦šà§‡à¦° à¦˜à¦°à§‡ TrxID à¦¦à¦¿à¦¨à¥¤</div>
-        <div class="payment-number-row">
-          <span class="payment-number" id="paymentNumber">01853367870</span>
-          <button class="copy-payment-btn" type="button" onclick="copyPaymentNumber()" aria-label="Copy payment number">â–£</button>
-        </div>
-        <input class="trxid-input" id="depositTrxId" type="text" maxlength="50" placeholder="à¦à¦–à¦¾à¦¨à§‡ TrxID à¦²à¦¿à¦–à§à¦¨..." oninput="clearTrxIdError()">
-        <div class="trxid-hint" id="trxidHint">à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¾à¦¨à§‹à¦° à¦ªà¦° à¦ªà§à¦°à¦¾à¦ªà§à¦¤ TrxID à¦à¦–à¦¾à¦¨à§‡ à¦²à¦¿à¦–à§à¦¨</div>
-      </div>
-
-      <button class="confirm-btn" onclick="doDeposit()">à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦•à¦°à§à¦¨ âž¤</button>
+      <button class="confirm-btn" onclick="submitDepositRequest()">সাবমিট করুন ➤</button>
 
       <div class="dep-footer">
         
@@ -1413,24 +1505,24 @@
 <div class="overlay" id="withdrawSheet">
   <div class="sheet deposit-sheet">
     <div class="deposit-header withdraw-header">
-      <button class="dep-close" onclick="closeSheet('withdrawSheet')">âœ•</button>
+      <button class="dep-close" onclick="closeSheet('withdrawSheet')">✕</button>
       <div class="deposit-header-top">
-        <div class="deposit-header-title">ðŸ’³ à¦‰à¦‡à¦¥à¦¡à§à¦°</div>
+        <div class="deposit-header-title">💳 উইথড্র</div>
         <div class="secure-pill">PAYOUT</div>
       </div>
       <div class="deposit-amount-block">
         <div class="deposit-amount-row">
-          <span class="tk-sym">à§³</span>
+          <span class="tk-sym">৳</span>
           <input type="number" id="withdrawAmount" placeholder="0" oninput="clearWithdrawChipSelection()">
         </div>
-        <div class="current-balance-note">à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ à¦¬à§à¦¯à¦¾à¦²à§‡à¦¨à§à¦¸: <span id="withdrawBalanceNote">à§³100.00</span></div>
+        <div class="current-balance-note">বর্তমান ব্যালেন্স: <span id="withdrawBalanceNote">৳100.00</span></div>
       </div>
     </div>
 
     <div class="deposit-body">
       <div class="auto-pay-box">
-        <div class="auto-pay-title">âš¡ à¦…à¦Ÿà§‹ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¸à¦¿à¦¸à§à¦Ÿà§‡à¦®</div>
-        <div class="auto-pay-sub" id="autoPaySubEl">à¦®à¦¿à¦¨à¦¿à¦®à¦¾à¦® à¦‰à¦‡à¦¥à¦¡à§à¦° 500 à¦Ÿà¦¾à¦•à¦¾à¥¤ à¦‰à¦‡à¦¥à¦¡à§à¦° à¦¦à§‡à¦¯à¦¼à¦¾à¦° à¦¸à¦¾à¦¥à§‡ à¦¸à¦¾à¦¥à§‡ à¦…à¦Ÿà§‹à¦®à§à¦¯à¦¾à¦Ÿà¦¿à¦•à¦­à¦¾à¦¬à§‡ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦ªà§‡à¦¯à¦¼à§‡ à¦¯à¦¾à¦¬à§‡à¦¨à¥¤</div>
+        <div class="auto-pay-title">⚡ অটো পেমেন্ট সিস্টেম</div>
+        <div class="auto-pay-sub" id="autoPaySubEl">মিনিমাম উইথড্র 500 টাকা। উইথড্র দেয়ার সাথে সাথে অটোম্যাটিকভাবে পেমেন্ট পেয়ে যাবেন।</div>
       </div>
 
       <div class="quick-chip-row" id="withdrawQuick">
@@ -1440,26 +1532,26 @@
         <button class="quick-chip" onclick="pickWithdrawAmount(this,5000)">5000</button>
       </div>
 
-      <div class="method-label">à¦•à§‹à¦¥à¦¾à¦¯à¦¼ à¦Ÿà¦¾à¦•à¦¾ à¦¨à¦¿à¦¬à§‡à¦¨?</div>
+      <div class="method-label">কোথায় টাকা নিবেন?</div>
       <div class="method-grid" id="withdrawMethodGrid">
         <div class="method-card" onclick="pickWithdrawMethod(this,'bKash')">
-          <div class="method-logo bkash-logo" aria-label="bKash logo"><span>b</span><b>K</b><i>âž¤</i></div>
+          <div class="method-logo bkash-logo" aria-label="bKash logo"><span>b</span><b>K</b><i>➤</i></div>
           <div class="method-name">BKASH</div>
         </div>
         <div class="method-card" onclick="pickWithdrawMethod(this,'Nagad')">
-          <div class="method-logo nagad-logo" aria-label="Nagad logo"><span>â—”</span><b>à¦¨à¦—à¦¦</b></div>
+          <div class="method-logo nagad-logo" aria-label="Nagad logo"><span>◔</span><b>নগদ</b></div>
           <div class="method-name">NAGAD</div>
         </div>
 
       </div>
 
       <div class="account-number-box" id="accountNumberBox" style="display:none;">
-        <label class="account-number-label">à¦†à¦ªà¦¨à¦¾à¦° à¦à¦•à¦¾à¦‰à¦¨à§à¦Ÿ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°</label>
+        <label class="account-number-label">আপনার একাউন্ট নাম্বার</label>
         <input type="tel" id="accountNumberInput" class="account-number-input" placeholder="01XXXXXXXXX" maxlength="11" oninput="validateAccountNumber()">
-        <div class="account-number-hint" id="accountNumberHint">à¦¸à¦ à¦¿à¦• à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦ªà§à¦°à¦¦à¦¾à¦¨ à¦•à¦°à§à¦¨</div>
+        <div class="account-number-hint" id="accountNumberHint">সঠিক নাম্বার প্রদান করুন</div>
       </div>
 
-      <button class="confirm-btn" onclick="doWithdraw()">à¦‰à¦‡à¦¥à¦¡à§à¦° à¦°à¦¿à¦•à§‹à¦¯à¦¼à§‡à¦¸à§à¦Ÿ âžœ</button>
+      <button class="confirm-btn" onclick="doWithdraw()">উইথড্র রিকোয়েস্ট ➜</button>
 
       <div class="dep-footer">
         
@@ -1473,16 +1565,16 @@
   <div class="sheet packages-sheet">
     <div class="sheet-header">
       <div class="sheet-title">Choose Your Task Plan</div>
-      <button class="close-btn" onclick="closeSheet('packagesSheet')">âœ•</button>
+      <button class="close-btn" onclick="closeSheet('packagesSheet')">✕</button>
     </div>
     <div class="packages-disclaimer">
-      à¦ªà§à¦°à¦¤à¦¿à¦Ÿà¦¿ à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦¸à¦‚à¦–à§à¦¯à¦• à¦…à§à¦¯à¦¾à¦¡ à¦Ÿà¦¾à¦¸à§à¦• à¦†à¦¨à¦²à¦• à¦•à¦°à§‡à¥¤ à¦†à¦¯à¦¼ à¦¨à¦¿à¦°à§à¦­à¦° à¦•à¦°à§‡ à¦†à¦ªà¦¨à¦¿ à¦•à¦¤à¦—à§à¦²à§‹ à¦Ÿà¦¾à¦¸à§à¦• à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦•à¦°à§‡à¦¨ à¦¤à¦¾à¦° à¦‰à¦ªà¦° â€” à¦•à§‹à¦¨à§‹ à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦¬à¦¾ à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦°à¦¿à¦Ÿà¦¾à¦°à§à¦¨ à¦¨à§‡à¦‡à¥¤
+      প্রতিটি প্ল্যান নির্দিষ্ট সংখ্যক অ্যাড টাস্ক আনলক করে। আয় নির্ভর করে আপনি কতগুলো টাস্ক সম্পন্ন করেন তার উপর — কোনো নির্দিষ্ট বা নিশ্চিত রিটার্ন নেই।
     </div>
 
     <div id="packagesList"></div>
 
     <div class="packages-footnote">
-      *à¦à¦Ÿà¦¿ à¦à¦•à¦Ÿà¦¿ à¦Šà¦°à§à¦§à§à¦¬à¦¸à§€à¦®à¦¾ à¦®à¦¾à¦¤à§à¦°, à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦†à¦¯à¦¼ à¦¨à¦¯à¦¼ â€” à¦ªà§à¦°à¦•à§ƒà¦¤ à¦†à¦¯à¦¼ à¦¨à¦¿à¦°à§à¦­à¦° à¦•à¦°à§‡ à¦†à¦ªà¦¨à¦¿ à¦•à¦¤à¦—à§à¦²à§‹ à¦Ÿà¦¾à¦¸à§à¦• à¦ªà§à¦°à¦•à§ƒà¦¤à¦ªà¦•à§à¦·à§‡ à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦•à¦°à§‡à¦¨ à¦¤à¦¾à¦° à¦‰à¦ªà¦°à¥¤ à¦Ÿà¦¾à¦¸à§à¦• à¦¨à¦¾ à¦•à¦°à¦²à§‡ à¦•à§‹à¦¨à§‹ à¦†à¦¯à¦¼ à¦¹à¦¬à§‡ à¦¨à¦¾à¥¤
+      *এটি একটি ঊর্ধ্বসীমা মাত্র, নিশ্চিত আয় নয় — প্রকৃত আয় নির্ভর করে আপনি কতগুলো টাস্ক প্রকৃতপক্ষে সম্পন্ন করেন তার উপর। টাস্ক না করলে কোনো আয় হবে না।
     </div>
   </div>
 </div>
@@ -1491,9 +1583,9 @@
 <div class="overlay" id="workSheet">
   <div class="sheet task-sheet">
     <div class="task-header">
-      <div class="task-header-title">ðŸ’¼ Task Center</div>
-      <div class="task-active-badge" id="taskActiveBadge">âœ“ ACTIVE</div>
-      <button class="close-btn" onclick="closeSheet('workSheet')" style="position:absolute;top:14px;right:16px;">âœ•</button>
+      <div class="task-header-title">💼 Task Center</div>
+      <div class="task-active-badge" id="taskActiveBadge">✓ ACTIVE</div>
+      <button class="close-btn" onclick="closeSheet('workSheet')" style="position:absolute;top:14px;right:16px;">✕</button>
     </div>
 
     <div class="task-progress-card">
@@ -1512,24 +1604,24 @@
     </div>
 
     <div class="start-task-wrap">
-      <button class="start-task-btn" id="startTaskBtn" onclick="startTask()">â–¶</button>
+      <button class="start-task-btn" id="startTaskBtn" onclick="startTask()">▶</button>
       <div class="start-task-label">START TASK</div>
     </div>
 
     <div class="task-stats-row">
       <div class="task-stat-box">
-        <div class="task-stat-label">â³ Remaining</div>
+        <div class="task-stat-label">⏳ Remaining</div>
         <div class="task-stat-value" id="taskRemainingLabel">0 Tasks</div>
       </div>
       <div class="task-stat-box">
-        <div class="task-stat-label">ðŸ’° Earned Today</div>
-        <div class="task-stat-value" id="taskEarnedLabel">à§³0.00</div>
+        <div class="task-stat-label">💰 Earned Today</div>
+        <div class="task-stat-value" id="taskEarnedLabel">৳0.00</div>
       </div>
     </div>
 
     <div class="task-activity-header">
       <span>Recent Activity</span>
-      <span style="cursor:pointer;" onclick="resetTask()" title="Reset">â†º</span>
+      <span style="cursor:pointer;" onclick="renderTaskCenter()" title="Refresh">↺</span>
     </div>
     <div id="taskActivityList" class="task-activity-empty">No tasks completed today.</div>
   </div>
@@ -1540,13 +1632,13 @@
   <div class="sheet">
     <div class="sheet-header">
       <div class="sheet-title">Refer a Friend</div>
-      <button class="close-btn" onclick="closeSheet('referSheet')">âœ•</button>
+      <button class="close-btn" onclick="closeSheet('referSheet')">✕</button>
     </div>
     <div class="field">
       <label>Your referral code</label>
       <input type="text" value="DSHAY-8823" readonly>
     </div>
-    <button class="primary-btn" onclick="showToast('à¦°à§‡à¦«à¦¾à¦°à§‡à¦² à¦•à§‹à¦¡ à¦•à¦ªà¦¿ à¦¹à¦¯à¦¼à§‡à¦›à§‡')">Copy Code</button>
+    <button class="primary-btn" onclick="showToast('রেফারেল কোড কপি হয়েছে')">Copy Code</button>
   </div>
 </div>
 
@@ -1555,11 +1647,11 @@
   <div class="sheet">
     <div class="sheet-header">
       <div class="sheet-title" id="registerTitle">Edit Profile Name</div>
-      <button class="close-btn" onclick="closeSheet('registerSheet')">âœ•</button>
+      <button class="close-btn" onclick="closeSheet('registerSheet')">✕</button>
     </div>
     <div class="field">
       <label>Full Name</label>
-      <input type="text" id="registerNameInput" placeholder="à¦¯à§‡à¦®à¦¨: Rahim Ahmed" maxlength="40">
+      <input type="text" id="registerNameInput" placeholder="যেমন: Rahim Ahmed" maxlength="40">
     </div>
     <button class="primary-btn" onclick="saveRegisteredName()">Save & Continue</button>
   </div>
@@ -1571,20 +1663,20 @@
     <div class="statement-header">
       <div class="statement-header-top">
         <div class="statement-title">Statement</div>
-        <button class="statement-back" onclick="closeSheet('historySheet')">â†</button>
+        <button class="statement-back" onclick="closeSheet('historySheet')">←</button>
       </div>
       <div class="statement-nav-label">Net Asset Value</div>
-      <div class="statement-nav-value"><span class="tk-sym" style="font-size:22px;">à§³</span><span id="statementBalance">100.00</span></div>
+      <div class="statement-nav-value"><span class="tk-sym" style="font-size:22px;">৳</span><span id="statementBalance">100.00</span></div>
     </div>
     <div class="statement-summary">
       <div class="statement-summary-col">
         <div class="statement-summary-label">TOTAL CREDIT</div>
-        <div class="statement-summary-value credit" id="statementCredit">à§³0</div>
+        <div class="statement-summary-value credit" id="statementCredit">৳0</div>
       </div>
       <div class="statement-summary-divider"></div>
       <div class="statement-summary-col">
         <div class="statement-summary-label">TOTAL DEBIT</div>
-        <div class="statement-summary-value debit" id="statementDebit">à§³0</div>
+        <div class="statement-summary-value debit" id="statementDebit">৳0</div>
       </div>
     </div>
     <div id="statementBody"></div>
@@ -1596,14 +1688,14 @@
   <div class="sheet">
     <div class="sheet-header">
       <div class="sheet-title">Support</div>
-      <button class="close-btn" onclick="closeSheet('supportSheet')">âœ•</button>
+      <button class="close-btn" onclick="closeSheet('supportSheet')">✕</button>
     </div>
-    <div class="admin-note" style="margin-bottom:16px;" id="supportContactNote">ðŸ“ž <span id="supportPhoneEl">+880 1XXXXXXXXX</span> &nbsp;Â·&nbsp; âœ‰ï¸ <span id="supportEmailEl">support@example.com</span></div>
+    <div class="admin-note" style="margin-bottom:16px;" id="supportContactNote">📞 <span id="supportPhoneEl">+880 1XXXXXXXXX</span> &nbsp;·&nbsp; ✉️ <span id="supportEmailEl">support@example.com</span></div>
     <div class="field">
       <label>Message</label>
       <input type="text" placeholder="Describe your issue...">
     </div>
-    <button class="primary-btn" onclick="showToast('à¦®à§‡à¦¸à§‡à¦œ à¦ªà¦¾à¦ à¦¾à¦¨à§‹ à¦¹à¦¯à¦¼à§‡à¦›à§‡')">Send Message</button>
+    <button class="primary-btn" onclick="showToast('মেসেজ পাঠানো হয়েছে')">Send Message</button>
   </div>
 </div>
 
@@ -1612,35 +1704,35 @@
   <div class="sheet privacy-sheet">
     <div class="sheet-header">
       <div class="sheet-title">Privacy &amp; Security</div>
-      <button class="close-btn" onclick="closeSheet('privacySheet')">âœ•</button>
+      <button class="close-btn" onclick="closeSheet('privacySheet')">✕</button>
     </div>
 
     <div class="privacy-section">
-      <div class="privacy-section-title">à¦¤à¦¥à§à¦¯ à¦¸à¦‚à¦—à§à¦°à¦¹</div>
-      <p class="privacy-text">à¦†à¦®à¦°à¦¾ à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦®, à¦«à§‹à¦¨ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦à¦¬à¦‚ à¦²à§‡à¦¨à¦¦à§‡à¦¨à§‡à¦° à¦¤à¦¥à§à¦¯ à¦¸à¦‚à¦—à§à¦°à¦¹ à¦•à¦°à¦¿ à¦¶à§à¦§à§à¦®à¦¾à¦¤à§à¦° à¦¸à§‡à¦¬à¦¾ à¦ªà§à¦°à¦¦à¦¾à¦¨à§‡à¦° à¦‰à¦¦à§à¦¦à§‡à¦¶à§à¦¯à§‡à¥¤ à¦à¦‡ à¦¸à¦¿à¦¸à§à¦Ÿà§‡à¦®à§‡ à¦¤à¦¥à§à¦¯ à¦†à¦ªà¦¨à¦¾à¦° à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ à¦¸à§‡à¦¶à¦¨à§‡ à¦¬à§à¦¯à¦¬à¦¹à§ƒà¦¤ à¦¹à¦¯à¦¼à¥¤</p>
+      <div class="privacy-section-title">তথ্য সংগ্রহ</div>
+      <p class="privacy-text">আমরা আপনার নাম, ফোন নাম্বার এবং লেনদেনের তথ্য সংগ্রহ করি শুধুমাত্র সেবা প্রদানের উদ্দেশ্যে। এই সিস্টেমে তথ্য আপনার বর্তমান সেশনে ব্যবহৃত হয়।</p>
     </div>
 
     <div class="privacy-section">
-      <div class="privacy-section-title">à¦¤à¦¥à§à¦¯à§‡à¦° à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°</div>
-      <p class="privacy-text">à¦¸à¦‚à¦—à§ƒà¦¹à§€à¦¤ à¦¤à¦¥à§à¦¯ à¦¶à§à¦§à§à¦®à¦¾à¦¤à§à¦° à¦…à§à¦¯à¦¾à¦•à¦¾à¦‰à¦¨à§à¦Ÿ à¦ªà¦°à¦¿à¦šà¦¾à¦²à¦¨à¦¾, à¦²à§‡à¦¨à¦¦à§‡à¦¨ à¦ªà§à¦°à¦•à§à¦°à¦¿à¦¯à¦¼à¦¾à¦•à¦°à¦£ à¦à¦¬à¦‚ à¦—à§à¦°à¦¾à¦¹à¦• à¦¸à¦¹à¦¾à¦¯à¦¼à¦¤à¦¾à¦° à¦œà¦¨à§à¦¯ à¦¬à§à¦¯à¦¬à¦¹à§ƒà¦¤ à¦¹à¦¬à§‡à¥¤ à¦¤à§ƒà¦¤à§€à¦¯à¦¼ à¦ªà¦•à§à¦·à§‡à¦° à¦•à¦¾à¦›à§‡ à¦¬à¦¿à¦•à§à¦°à¦¿ à¦¬à¦¾ à¦¶à§‡à¦¯à¦¼à¦¾à¦° à¦•à¦°à¦¾ à¦¹à¦¯à¦¼ à¦¨à¦¾à¥¤</p>
+      <div class="privacy-section-title">তথ্যের ব্যবহার</div>
+      <p class="privacy-text">সংগৃহীত তথ্য শুধুমাত্র অ্যাকাউন্ট পরিচালনা, লেনদেন প্রক্রিয়াকরণ এবং গ্রাহক সহায়তার জন্য ব্যবহৃত হবে। তৃতীয় পক্ষের কাছে বিক্রি বা শেয়ার করা হয় না।</p>
     </div>
 
     <div class="privacy-section">
-      <div class="privacy-section-title">à¦¨à¦¿à¦°à¦¾à¦ªà¦¤à§à¦¤à¦¾ à¦šà¦°à§à¦šà¦¾</div>
+      <div class="privacy-section-title">নিরাপত্তা চর্চা</div>
       <ul class="privacy-list">
-        <li>à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦à¦¨à¦•à§à¦°à¦¿à¦ªà§à¦Ÿà§‡à¦¡ à¦†à¦•à¦¾à¦°à§‡ à¦¸à¦‚à¦°à¦•à§à¦·à¦£ à¦•à¦°à¦¾ à¦¹à¦¯à¦¼ (à¦•à¦–à¦¨à§‹ à¦ªà§à¦²à§‡à¦‡à¦¨ à¦Ÿà§‡à¦•à§à¦¸à¦Ÿà§‡ à¦¨à¦¯à¦¼)</li>
-        <li>à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦¸à¦®à¦¯à¦¼ à¦¨à¦¿à¦·à§à¦•à§à¦°à¦¿à¦¯à¦¼ à¦¥à¦¾à¦•à¦²à§‡ à¦¸à§‡à¦¶à¦¨ à¦¸à§à¦¬à¦¯à¦¼à¦‚à¦•à§à¦°à¦¿à¦¯à¦¼à¦­à¦¾à¦¬à§‡ à¦¶à§‡à¦· à¦¹à¦¯à¦¼à§‡ à¦¯à¦¾à¦¯à¦¼</li>
-        <li>à¦¸à¦•à¦² à¦¸à¦‚à¦¯à§‹à¦— HTTPS à¦à¦¨à¦•à§à¦°à¦¿à¦ªà¦¶à¦¨à§‡à¦° à¦®à¦¾à¦§à§à¦¯à¦®à§‡ à¦¸à§à¦°à¦•à§à¦·à¦¿à¦¤ à¦°à¦¾à¦–à¦¾à¦° à¦šà§‡à¦·à§à¦Ÿà¦¾ à¦•à¦°à¦¾ à¦¹à¦¯à¦¼</li>
-        <li>à¦¸à¦‚à¦¬à§‡à¦¦à¦¨à¦¶à§€à¦² à¦¤à¦¥à§à¦¯à§‡ à¦…à§à¦¯à¦¾à¦•à§à¦¸à§‡à¦¸ à¦¸à§€à¦®à¦¿à¦¤ à¦“ à¦²à¦— à¦•à¦°à¦¾ à¦¥à¦¾à¦•à§‡</li>
+        <li>পাসওয়ার্ড এনক্রিপ্টেড আকারে সংরক্ষণ করা হয় (কখনো প্লেইন টেক্সটে নয়)</li>
+        <li>নির্দিষ্ট সময় নিষ্ক্রিয় থাকলে সেশন স্বয়ংক্রিয়ভাবে শেষ হয়ে যায়</li>
+        <li>সকল সংযোগ HTTPS এনক্রিপশনের মাধ্যমে সুরক্ষিত রাখার চেষ্টা করা হয়</li>
+        <li>সংবেদনশীল তথ্যে অ্যাক্সেস সীমিত ও লগ করা থাকে</li>
       </ul>
     </div>
 
     <div class="privacy-section">
-      <div class="privacy-section-title">à¦†à¦ªà¦¨à¦¾à¦° à¦…à¦§à¦¿à¦•à¦¾à¦°</div>
-      <p class="privacy-text">à¦†à¦ªà¦¨à¦¿ à¦¯à§‡à¦•à§‹à¦¨à§‹ à¦¸à¦®à¦¯à¦¼ à¦†à¦ªà¦¨à¦¾à¦° à¦¤à¦¥à§à¦¯ à¦¦à§‡à¦–à¦¤à§‡, à¦¸à¦‚à¦¶à§‹à¦§à¦¨ à¦•à¦°à¦¤à§‡ à¦¬à¦¾ à¦®à§à¦›à§‡ à¦«à§‡à¦²à¦¾à¦° à¦…à¦¨à§à¦°à§‹à¦§ à¦•à¦°à¦¤à§‡ à¦ªà¦¾à¦°à§‡à¦¨à¥¤ à¦¸à¦¹à¦¾à¦¯à¦¼à¦¤à¦¾à¦° à¦œà¦¨à§à¦¯ Support à¦¬à¦¿à¦­à¦¾à¦—à§‡ à¦¯à§‹à¦—à¦¾à¦¯à§‹à¦— à¦•à¦°à§à¦¨à¥¤</p>
+      <div class="privacy-section-title">আপনার অধিকার</div>
+      <p class="privacy-text">আপনি যেকোনো সময় আপনার তথ্য দেখতে, সংশোধন করতে বা মুছে ফেলার অনুরোধ করতে পারেন। সহায়তার জন্য Support বিভাগে যোগাযোগ করুন।</p>
     </div>
 
-    <div class="privacy-note">à¦à¦Ÿà¦¿ à¦à¦•à¦Ÿà¦¿ à¦ªà§à¦²à§‡à¦¸à¦¹à§‹à¦²à§à¦¡à¦¾à¦° à¦¨à§€à¦¤à¦¿à¦®à¦¾à¦²à¦¾à¥¤ à¦ªà§à¦°à¦•à§ƒà¦¤ à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à§‡à¦° à¦†à¦—à§‡ à¦à¦•à¦œà¦¨ à¦†à¦‡à¦¨à¦œà§€à¦¬à§€à¦° à¦®à¦¾à¦§à§à¦¯à¦®à§‡ à¦¯à¦¾à¦šà¦¾à¦‡ à¦•à¦°à¦¾ à¦ªà§à¦°à¦•à§ƒà¦¤ à¦¨à§€à¦¤à¦¿à¦®à¦¾à¦²à¦¾ à¦¦à¦¿à¦¯à¦¼à§‡ à¦ªà§à¦°à¦¤à¦¿à¦¸à§à¦¥à¦¾à¦ªà¦¨ à¦•à¦°à§à¦¨à¥¤</div>
+    <div class="privacy-note">এটি একটি প্লেসহোল্ডার নীতিমালা। প্রকৃত ব্যবহারের আগে একজন আইনজীবীর মাধ্যমে যাচাই করা প্রকৃত নীতিমালা দিয়ে প্রতিস্থাপন করুন।</div>
   </div>
 </div>
 
@@ -1649,10 +1741,10 @@
   <div class="sheet">
     <div class="sheet-header">
       <div class="sheet-title">Log out?</div>
-      <button class="close-btn" onclick="closeSheet('logoutSheet')">âœ•</button>
+      <button class="close-btn" onclick="closeSheet('logoutSheet')">✕</button>
     </div>
     <p style="font-size:14px;color:var(--muted);">Are you sure you want to log out?</p>
-    <button class="primary-btn red" onclick="showToast('à¦²à¦— à¦†à¦‰à¦Ÿ à¦¹à¦¯à¦¼à§‡à¦›à§‡'); closeSheet('logoutSheet')">Log Out</button>
+    <button class="primary-btn red" onclick="doLogout(); showToast('লগ আউট হয়েছে');">Log Out</button>
   </div>
 </div>
 
@@ -1661,7 +1753,7 @@
   <div class="sheet">
     <div class="sheet-header">
       <div class="sheet-title">Menu</div>
-      <button class="close-btn" onclick="closeSheet('menuSheet')">âœ•</button>
+      <button class="close-btn" onclick="closeSheet('menuSheet')">✕</button>
     </div>
     <div class="package-card" onclick="openSheet('privacySheet')"><div class="package-name">Privacy</div></div>
     <div class="package-card" onclick="openSheet('supportSheet')"><div class="package-name">Support</div></div>
@@ -1669,87 +1761,122 @@
   </div>
 </div>
 
-<!-- Admin Panel -->
-<div class="overlay" id="adminSheet">
-  <div class="sheet admin-sheet">
-    <div class="sheet-header">
-      <div class="sheet-title">âš™ï¸ Admin Panel</div>
-      <button class="close-btn" onclick="closeSheet('adminSheet')">âœ•</button>
-    </div>
-
-    <div class="auth-tabs admin-tabs">
-      <button class="auth-tab active" id="adminTabContentBtn" onclick="switchAdminTab('content')">Content</button>
-      <button class="auth-tab" id="adminTabPlansBtn" onclick="switchAdminTab('plans')">Plans</button>
-      <button class="auth-tab" id="adminTabSettingsBtn" onclick="switchAdminTab('settings')">Settings</button>
-      <button class="auth-tab" id="adminTabActivityBtn" onclick="switchAdminTab('activity')">Activity</button>
-    </div>
-
-    <!-- Content tab -->
-    <div id="adminContentPanel">
-      <div class="admin-section-title">Home Banner</div>
-      <div class="field"><label>Banner Title</label><input type="text" id="adminBannerTitle"></div>
-      <div class="field"><label>Banner Line 1</label><input type="text" id="adminBannerSub1"></div>
-      <div class="field"><label>Banner Line 2</label><input type="text" id="adminBannerSub2"></div>
-      <div class="admin-section-title">App Identity</div>
-      <div class="field"><label>App Name (shown on login screen)</label><input type="text" id="adminAppName"></div>
-      <button class="primary-btn" onclick="saveAdminContent()">Save Content</button>
-    </div>
-
-    <!-- Plans tab -->
-    <div id="adminPlansPanel" style="display:none;">
-      <div class="admin-section-title">Task Plans</div>
-      <div id="adminPlansList"></div>
-      <div class="admin-note">à¦ªà§à¦°à¦¤à¦¿à¦Ÿà¦¿ à¦ªà§à¦²à§à¦¯à¦¾à¦¨à§‡à¦° à¦¸à¦°à§à¦¬à§‹à¦šà§à¦š à¦¸à¦®à§à¦­à¦¾à¦¬à§à¦¯ à¦†à¦¯à¦¼ à¦¸à§à¦¬à¦¯à¦¼à¦‚à¦•à§à¦°à¦¿à¦¯à¦¼à¦­à¦¾à¦¬à§‡ à¦¹à¦¿à¦¸à¦¾à¦¬ à¦¹à¦¯à¦¼ (validity Ã— ads/day Ã— reward/ad) â€” à¦•à§‹à¦¨à§‹ à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦°à¦¿à¦Ÿà¦¾à¦°à§à¦¨ à¦¸à§‡à¦Ÿ à¦•à¦°à¦¾ à¦¯à¦¾à¦¬à§‡ à¦¨à¦¾à¥¤</div>
-    </div>
-
-    <!-- Settings tab -->
-    <div id="adminSettingsPanel" style="display:none;">
-      <div class="admin-section-title">Transaction Limits</div>
-      <div class="field"><label>Minimum Deposit (à§³)</label><input type="number" id="adminMinDeposit"></div>
-      <div class="field"><label>Minimum Withdraw (à§³)</label><input type="number" id="adminMinWithdraw"></div>
-      <div class="admin-section-title">Support Contact</div>
-      <div class="field"><label>Support Phone</label><input type="text" id="adminSupportPhone"></div>
-      <div class="field"><label>Support Email</label><input type="text" id="adminSupportEmail"></div>
-      <button class="primary-btn" onclick="saveAdminSettings()">Save Settings</button>
-    </div>
-
-    <!-- Activity tab (read-only) -->
-    <div id="adminActivityPanel" style="display:none;">
-      <div class="admin-section-title">Recent Transactions <span style="font-weight:400;color:var(--muted);font-size:11px;">(read-only, this session)</span></div>
-      <div id="adminTxList"></div>
-      <div class="admin-section-title">Task Activity Today <span style="font-weight:400;color:var(--muted);font-size:11px;">(read-only)</span></div>
-      <div id="adminTaskList"></div>
-    </div>
-
-    <div class="admin-note" style="margin-top:6px;">à¦à¦‡ à¦à¦¡à¦®à¦¿à¦¨ à¦ªà§à¦¯à¦¾à¦¨à§‡à¦² à¦¶à§à¦§à§à¦®à¦¾à¦¤à§à¦° à¦…à§à¦¯à¦¾à¦ªà§‡à¦° à¦•à¦¨à§à¦Ÿà§‡à¦¨à§à¦Ÿ à¦“ à¦¸à§‡à¦Ÿà¦¿à¦‚à¦¸ à¦¨à¦¿à¦¯à¦¼à¦¨à§à¦¤à§à¦°à¦£ à¦•à¦°à§‡ â€” à¦•à§‹à¦¨à§‹ à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à¦•à¦¾à¦°à§€à¦° à¦¬à§à¦¯à¦¾à¦²à§‡à¦¨à§à¦¸ à¦¸à¦®à§à¦ªà¦¾à¦¦à¦¨à¦¾ à¦¬à¦¾ à¦‰à¦‡à¦¥à¦¡à§à¦° à¦…à¦¨à§à¦®à§‹à¦¦à¦¨à§‡à¦° à¦•à§à¦·à¦®à¦¤à¦¾ à¦à¦–à¦¾à¦¨à§‡ à¦¨à§‡à¦‡à¥¤</div>
-  </div>
-</div>
-
 <!-- Payment processing overlay -->
 <div class="overlay" id="processingSheet">
   <div class="processing-sheet" id="processingContent">
     <div class="spinner"></div>
-    <div class="processing-title">à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦ªà§à¦°à¦¸à§‡à¦¸ à¦¹à¦šà§à¦›à§‡...</div>
-    <div class="processing-sub">à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦…à¦ªà§‡à¦•à§à¦·à¦¾ à¦•à¦°à§à¦¨, à¦à¦Ÿà¦¿ à¦•à¦¯à¦¼à§‡à¦• à¦¸à§‡à¦•à§‡à¦¨à§à¦¡ à¦¸à¦®à¦¯à¦¼ à¦¨à¦¿à¦¤à§‡ à¦ªà¦¾à¦°à§‡à¥¤</div>
+    <div class="processing-title">পেমেন্ট প্রসেস হচ্ছে...</div>
+    <div class="processing-sub">অনুগ্রহ করে অপেক্ষা করুন, এটি কয়েক সেকেন্ড সময় নিতে পারে।</div>
   </div>
 </div>
 
+<!-- ===== Deposit confirmation popup: address + amount + copy + TrxID ===== -->
+<div class="overlay" id="depositConfirmSheet">
+  <div class="dep-modal">
+    <div class="dep-modal-head">
+      <button class="x" onclick="closeSheet('depositConfirmSheet')">✕</button>
+      <div class="dep-modal-method" id="dcMethodPill">📱 bKash</div>
+      <div class="dep-modal-title">যে পরিমাণ পাঠাবেন</div>
+      <div class="dep-modal-amount" id="dcAmount">৳0</div>
+    </div>
+
+    <div class="dep-modal-body">
+      <div class="dep-step"><span class="num">1</span> টাকা পাঠান</div>
+      <div class="dep-instruction" id="dcInstruction"></div>
+
+      <div class="copy-row">
+        <div class="copy-row-main">
+          <div class="copy-row-label" id="dcAddressLabel">পেমেন্ট নাম্বার</div>
+          <div class="copy-row-value" id="dcAddress">—</div>
+        </div>
+        <button class="copy-btn" type="button" onclick="copyDepositField('dcAddress', this)">📋 Copy</button>
+      </div>
+
+      <div class="copy-row amount-row">
+        <div class="copy-row-main">
+          <div class="copy-row-label">পরিমাণ (Amount)</div>
+          <div class="copy-row-value" id="dcAmountPlain">0</div>
+        </div>
+        <button class="copy-btn" type="button" onclick="copyDepositField('dcAmountPlain', this)">📋 Copy</button>
+      </div>
+
+      <div class="trx-required-box">
+        <div class="dep-step"><span class="num">2</span> Transaction ID দিন</div>
+        <div class="trx-required-label">Transaction ID / TrxID <span class="req">*</span></div>
+        <div class="trx-required-sub" id="dcTrxHint">
+          টাকা পাঠানোর পর যে Transaction ID পেয়েছেন সেটি এখানে লিখুন। এটি ছাড়া ডিপোজিট রিকোয়েস্ট পাঠানো যাবে না।
+        </div>
+        <input class="trx-modal-input" id="dcTrxId" type="text" maxlength="60"
+               placeholder="যেমন: 9F2K7XQ1PL" autocomplete="off" oninput="clearDcTrxError()">
+        <div class="trx-modal-error" id="dcTrxError"></div>
+      </div>
+
+      <div class="dep-modal-actions">
+        <button class="dep-cancel-btn" onclick="closeSheet('depositConfirmSheet')">বাতিল</button>
+        <button class="dep-submit-btn" id="dcSubmitBtn" onclick="confirmDepositRequest()">ডিপোজিট রিকোয়েস্ট পাঠান</button>
+      </div>
+
+      <div class="dep-warn-note">
+        ⓘ রিকোয়েস্ট পাঠানোর পর অ্যাডমিন যাচাই করে অনুমোদন দিলে আপনার ব্যালেন্সে টাকা যোগ হবে।
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mode-badge hidden" id="modeBadge"></div>
 <div class="toast" id="toast"></div>
 
 <script>
-let balance = 100.00;
+/* ==========================================================================
+   Task Wallet — user app
+   All data goes through window.DB (js/db.js), which talks to Firestore when
+   firebase-config.js has real keys, and to localStorage otherwise.
+   ========================================================================== */
+
+let currentUser = null;      // the logged-in user document
+let balance = 0;
 let registeredName = null;
 
-// ===== Admin-controlled app settings (content/config only â€” no balance or withdrawal control) =====
+let appConfig = Object.assign({}, (window.DB && DB.DEFAULT_CONFIG) || {});
+let depositMethods = [];
+let plansData = [];
+
+let myTransactions = [];
+let myDeposits = [];
+let myWithdrawals = [];
+
 let minDepositAmount = 500;
 let minWithdrawAmount = 500;
 let supportPhone = '+880 1XXXXXXXXX';
 let supportEmail = 'support@example.com';
 
+let selectedMethod = null;          // deposit method object
+let selectedWithdrawMethod = null;  // withdraw method name
+let pendingDeposit = null;          // { amount, method } awaiting popup confirmation
+
+const unsubscribers = [];
+
+/* ------------------------------------------------------------------ utils */
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function money(n){ return Number(n || 0).toFixed(2); }
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
 function fmtBalance(){
-  document.getElementById('balanceDisplay').innerHTML = '<span class="tk">à§³</span>' + balance.toFixed(2);
+  document.getElementById('balanceDisplay').innerHTML = '<span class="tk">৳</span>' + money(balance);
   const note = document.getElementById('withdrawBalanceNote');
-  if(note) note.textContent = 'à§³' + balance.toFixed(2);
+  if(note) note.textContent = '৳' + money(balance);
 }
 
 function openSheet(id){
@@ -1780,8 +1907,186 @@ function setActiveNav(id){
   }
 }
 
-let selectedMethod = null;
-let selectedWithdrawMethod = null;
+function timeAgo(iso){
+  if(!iso) return '';
+  const diff = (Date.now() - new Date(iso).getTime())/1000;
+  if(diff < 60)    return 'Just now';
+  if(diff < 3600)  return Math.floor(diff/60) + ' min ago';
+  if(diff < 86400) return Math.floor(diff/3600) + ' hr ago';
+  return Math.floor(diff/86400) + ' day ago';
+}
+function timeOf(iso){
+  if(!iso) return '';
+  return new Date(iso).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* =========================================================== BOOT ======= */
+
+async function boot(){
+  const mode = await DB.init();
+
+  const badge = document.getElementById('modeBadge');
+  if(mode !== 'firestore'){
+    badge.textContent = '⚠ DEMO MODE — data saved in this browser only. Add your keys to firebase-config.js to go live.';
+    badge.classList.remove('hidden');
+  }
+
+  await loadAppConfig();
+
+  // restore a previous session
+  const sess = DB.getSession();
+  if(sess){
+    const u = await DB.getUser(sess.id);
+    if(u && u.status !== 'blocked'){
+      enterApp(u);
+    } else {
+      DB.clearSession();
+    }
+  }
+
+  // live config updates pushed from the admin dashboard
+  DB.watchConfigDoc('app', cfg => { if(cfg){ appConfig = cfg; applyConfig(); } });
+  DB.watchConfigDoc('methods', d => {
+    if(d && d.items){ depositMethods = d.items; renderMethodGrid(); renderWithdrawMethodGrid(); }
+  });
+  DB.watchConfigDoc('plans', d => {
+    if(d && d.items){ plansData = d.items; renderPackages(); }
+  });
+}
+
+async function loadAppConfig(){
+  appConfig      = await DB.getConfig();
+  depositMethods = await DB.getMethods();
+  plansData      = await DB.getPlans();
+  applyConfig();
+  renderMethodGrid();
+  renderWithdrawMethodGrid();
+  renderPackages();
+}
+
+function applyConfig(){
+  minDepositAmount = Number(appConfig.minDeposit)  || 500;
+  minWithdrawAmount= Number(appConfig.minWithdraw) || 500;
+  supportPhone     = appConfig.supportPhone || supportPhone;
+  supportEmail     = appConfig.supportEmail || supportEmail;
+
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  set('authAppNameEl', appConfig.appName || 'Task Wallet');
+  set('bannerTitleEl', appConfig.bannerTitle || '');
+  set('bannerSub1El',  appConfig.bannerSub1 || '');
+  set('bannerSub2El',  appConfig.bannerSub2 || '');
+  set('minDepNoteEl',  '⚠️ সর্বনিম্ন ডিপোজিট ' + minDepositAmount + ' টাকা');
+  set('autoPaySubEl',  'মিনিমাম উইথড্র ' + minWithdrawAmount + ' টাকা। রিকোয়েস্ট অ্যাডমিন অনুমোদনের পর পেমেন্ট পাঠানো হবে।');
+  set('supportPhoneEl', supportPhone);
+  set('supportEmailEl', supportEmail);
+  document.title = appConfig.appName || 'Task Wallet';
+}
+
+/* ================================================= SESSION / RENDERING == */
+
+function enterApp(user){
+  currentUser = user;
+  balance = Number(user.balance || 0);
+  registeredName = user.name;
+  DB.setSession(user);
+
+  document.getElementById('usernameDisplay').textContent = user.name;
+  const referInput = document.querySelector('#referSheet input[type="text"]');
+  if(referInput) referInput.value = user.referralCode || '';
+  document.getElementById('authScreen').style.display = 'none';
+
+  fmtBalance();
+  restorePlanState(user);
+  subscribeToMyData();
+}
+
+/* Live subscriptions so admin approvals appear instantly for the user. */
+function subscribeToMyData(){
+  while(unsubscribers.length){ try{ unsubscribers.pop()(); }catch(e){} }
+
+  unsubscribers.push(DB.watchUsers(users => {
+    if(!currentUser) return;
+    const me = users.find(u => u.id === currentUser.id);
+    if(!me) return;
+    if(me.status === 'blocked'){
+      showToast('আপনার অ্যাকাউন্টটি ব্লক করা হয়েছে');
+      setTimeout(doLogout, 1500);
+      return;
+    }
+    const before = balance;
+    currentUser = me;
+    balance = Number(me.balance || 0);
+    fmtBalance();
+    if(balance > before){
+      showToast('✅ ৳' + money(balance - before) + ' আপনার ব্যালেন্সে যোগ হয়েছে');
+    }
+    restorePlanState(me);
+  }));
+
+  unsubscribers.push(DB.watchTransactions(all => {
+    myTransactions = all
+      .filter(t => t.uid === currentUser.id)
+      .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    renderTx();
+    renderStatement();
+  }));
+
+  unsubscribers.push(DB.watchDeposits(all => {
+    myDeposits = all.filter(d => d.uid === currentUser.id);
+    renderStatement();
+  }));
+
+  unsubscribers.push(DB.watchWithdrawals(all => {
+    myWithdrawals = all.filter(w => w.uid === currentUser.id);
+    renderStatement();
+  }));
+}
+
+function restorePlanState(user){
+  if(user.plan){
+    activePlanName  = user.plan.name;
+    dailyTaskQuota  = user.plan.adsPerDay;
+    rewardPerTask   = user.plan.rewardPerAd;
+    const today = new Date().toDateString();
+    if(user.plan.lastTaskDate !== today){
+      dailyTasksDone = 0;
+      todayEarned = 0;
+      taskActivityLog = [];
+    } else {
+      dailyTasksDone = user.plan.tasksToday || 0;
+      todayEarned    = user.plan.earnedToday || 0;
+    }
+  } else {
+    activePlanName = null;
+    dailyTaskQuota = 0;
+    rewardPerTask  = 0;
+  }
+  renderTaskCenter();
+}
+
+/* ================================================ DEPOSIT METHOD GRID == */
+
+function renderMethodGrid(){
+  const grid = document.getElementById('methodGrid');
+  if(!grid) return;
+  const active = depositMethods.filter(m => m.enabled !== false);
+  if(!active.length){
+    grid.innerHTML = '<div class="admin-note">এই মুহূর্তে কোনো পেমেন্ট মেথড চালু নেই।</div>';
+    return;
+  }
+  grid.innerHTML = active.map(m => `
+    <div class="method-card" onclick="pickMethod(this,'${esc(m.id)}')">
+      <div class="method-emoji">${esc(m.icon || '💳')}</div>
+      <div class="method-name">${esc((m.name||'').toUpperCase())}</div>
+    </div>
+  `).join('');
+}
+
+function pickMethod(card, methodId){
+  document.querySelectorAll('#methodGrid .method-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedMethod = depositMethods.find(m => m.id === methodId) || null;
+}
 
 function pickAmount(btn, amt){
   document.querySelectorAll('#depositQuick button').forEach(b=>b.classList.remove('selected'));
@@ -1791,42 +2096,160 @@ function pickAmount(btn, amt){
 function clearChipSelection(){
   document.querySelectorAll('#depositQuick button').forEach(b=>b.classList.remove('selected'));
 }
-const paymentAccounts = {
-  bKash: '01853367870',
-  Nagad: 'à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¸à§‡à¦Ÿ à¦•à¦°à§à¦¨',
-};
 
-function pickMethod(card, name){
-  document.querySelectorAll('#methodGrid .method-card').forEach(c=>c.classList.remove('selected'));
-  card.classList.add('selected');
-  selectedMethod = name;
+/* ---- STEP 1: user enters amount + method, presses Submit -> open popup -- */
 
-  const box = document.getElementById('paymentInstruction');
-  const number = document.getElementById('paymentNumber');
-  const text = document.getElementById('paymentInstructionText');
-  if(box && number && text){
-    const account = paymentAccounts[name] || 'à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¸à§‡à¦Ÿ à¦•à¦°à§à¦¨';
-    number.textContent = account;
-    text.textContent = 'à¦ªà§à¦°à¦¿à¦¯à¦¼ à¦—à§à¦°à¦¾à¦¹à¦•, à¦¨à¦¿à¦šà§‡à¦° ' + name + ' à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°à§‡ à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¿à¦¯à¦¼à§‡ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦•à¦°à§à¦¨à¥¤ à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¾à¦¨à§‹à¦° à¦ªà¦° à¦¨à¦¿à¦šà§‡à¦° à¦˜à¦°à§‡ TrxID à¦¦à¦¿à¦¨à¥¤';
-    box.classList.add('show');
+function submitDepositRequest(){
+  if(!currentUser){ showToast('আগে লগইন করুন'); return; }
+
+  const amt = parseFloat(document.getElementById('depositAmount').value);
+  if(!amt || amt <= 0){ showToast('একটি সঠিক পরিমাণ লিখুন'); return; }
+  if(!selectedMethod){ showToast('পেমেন্ট মেথড বাছুন'); return; }
+
+  const minForMethod = Number(selectedMethod.minAmount) || minDepositAmount;
+  if(amt < minForMethod){
+    showToast(selectedMethod.name + ' এ সর্বনিম্ন ডিপোজিট ৳' + minForMethod);
+    return;
+  }
+
+  pendingDeposit = { amount: amt, method: selectedMethod };
+
+  // fill the popup from the admin-configured method
+  document.getElementById('dcMethodPill').textContent =
+    (selectedMethod.icon || '💳') + ' ' + selectedMethod.name;
+  document.getElementById('dcAmount').textContent      = '৳' + amt.toLocaleString();
+  document.getElementById('dcAmountPlain').textContent = String(amt);
+  document.getElementById('dcAddress').textContent     = selectedMethod.address || '—';
+  document.getElementById('dcAddressLabel').textContent =
+    selectedMethod.type === 'crypto' ? 'ডিপোজিট অ্যাড্রেস' : 'পেমেন্ট নাম্বার';
+  document.getElementById('dcInstruction').textContent =
+    selectedMethod.instruction || ('উপরের ' + selectedMethod.name + ' এ ৳' + amt + ' পাঠান, তারপর Transaction ID নিচে লিখুন।');
+
+  const trx = document.getElementById('dcTrxId');
+  trx.value = '';
+  trx.classList.remove('invalid');
+  document.getElementById('dcTrxError').textContent = '';
+  document.getElementById('dcSubmitBtn').disabled = false;
+  document.getElementById('dcSubmitBtn').textContent = 'ডিপোজিট রিকোয়েস্ট পাঠান';
+
+  openSheet('depositConfirmSheet');
+}
+
+function copyDepositField(elId, btn){
+  const val = document.getElementById(elId)?.textContent?.trim();
+  if(!val || val === '—'){ showToast('কপি করার মতো কিছু নেই'); return; }
+  const done = () => {
+    const old = btn.innerHTML;
+    btn.innerHTML = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.innerHTML = old; btn.classList.remove('copied'); }, 1600);
+    showToast('কপি হয়েছে: ' + val);
+  };
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(val).then(done).catch(()=>fallbackCopy(val, done));
+  } else {
+    fallbackCopy(val, done);
+  }
+}
+function fallbackCopy(text, cb){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand('copy'); cb(); }
+  catch(e){ showToast(text); }
+  document.body.removeChild(ta);
+}
+
+function clearDcTrxError(){
+  document.getElementById('dcTrxId').classList.remove('invalid');
+  document.getElementById('dcTrxError').textContent = '';
+}
+
+/* ---- STEP 2: user pastes TrxID and confirms -> pending request saved ---- */
+
+async function confirmDepositRequest(){
+  if(!pendingDeposit || !currentUser) return;
+
+  const input = document.getElementById('dcTrxId');
+  const trxId = input.value.trim();
+  const errEl = document.getElementById('dcTrxError');
+
+  if(!trxId){
+    input.classList.add('invalid');
+    errEl.textContent = 'Transaction ID না দিলে ডিপোজিট রিকোয়েস্ট পাঠানো যাবে না';
+    input.focus();
+    return;
+  }
+  if(trxId.length < 4){
+    input.classList.add('invalid');
+    errEl.textContent = 'সঠিক Transaction ID লিখুন (কমপক্ষে ৪ অক্ষর)';
+    input.focus();
+    return;
+  }
+
+  // block duplicate TrxIDs
+  const existing = (await DB.listDeposits()).find(
+    d => (d.trxId || '').toLowerCase() === trxId.toLowerCase()
+  );
+  if(existing){
+    input.classList.add('invalid');
+    errEl.textContent = 'এই Transaction ID আগে ব্যবহার করা হয়েছে';
+    return;
+  }
+
+  const btn = document.getElementById('dcSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'পাঠানো হচ্ছে...';
+
+  try{
+    await DB.createDeposit({
+      uid: currentUser.id,
+      name: currentUser.name,
+      phone: currentUser.phone,
+      amount: pendingDeposit.amount,
+      method: pendingDeposit.method.name,
+      address: pendingDeposit.method.address,
+      trxId: trxId
+    });
+
+    closeSheet('depositConfirmSheet');
+    showProcessing(
+      'রিকোয়েস্ট পাঠানো হচ্ছে...',
+      'অনুগ্রহ করে অপেক্ষা করুন।',
+      () => {
+        showToast('✅ ডিপোজিট রিকোয়েস্ট পাঠানো হয়েছে — অ্যাডমিন অনুমোদনের অপেক্ষায়');
+        document.getElementById('depositAmount').value = '';
+        document.querySelectorAll('#depositQuick button').forEach(b=>b.classList.remove('selected'));
+        document.querySelectorAll('#methodGrid .method-card').forEach(c=>c.classList.remove('selected'));
+        selectedMethod = null;
+        pendingDeposit = null;
+        closeSheet('depositSheet');
+      },
+      'রিকোয়েস্ট জমা হয়েছে!',
+      'অ্যাডমিন যাচাই করে অনুমোদন দিলে ব্যালেন্সে টাকা যোগ হবে।'
+    );
+  }catch(e){
+    btn.disabled = false;
+    btn.textContent = 'ডিপোজিট রিকোয়েস্ট পাঠান';
+    showToast(e.message || 'রিকোয়েস্ট পাঠাতে সমস্যা হয়েছে');
   }
 }
 
-function clearTrxIdError(){
-  const input = document.getElementById('depositTrxId');
-  const hint = document.getElementById('trxidHint');
-  if(input) input.classList.remove('invalid');
-  if(hint){ hint.textContent='à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¾à¦¨à§‹à¦° à¦ªà¦° à¦ªà§à¦°à¦¾à¦ªà§à¦¤ TrxID à¦à¦–à¦¾à¦¨à§‡ à¦²à¦¿à¦–à§à¦¨'; hint.style.color='#a16207'; }
-}
+/* ==================================================== WITHDRAW ========== */
 
-function copyPaymentNumber(){
-  const number = document.getElementById('paymentNumber')?.textContent?.trim();
-  if(!number || number.includes('à¦¸à§‡à¦Ÿ à¦•à¦°à§à¦¨')){ showToast('à¦à¦‡ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦®à§‡à¦¥à¦¡à§‡à¦° à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¸à§‡à¦Ÿ à¦•à¦°à¦¾ à¦¨à§‡à¦‡'); return; }
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(number).then(()=>showToast('à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦•à¦ªà¦¿ à¦¹à¦¯à¦¼à§‡à¦›à§‡'));
-  }else{
-    showToast('à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°: '+number);
-  }
+function renderWithdrawMethodGrid(){
+  const grid = document.getElementById('withdrawMethodGrid');
+  if(!grid) return;
+  const active = depositMethods.filter(m => m.enabled !== false && m.type !== 'crypto');
+  grid.innerHTML = active.map(m => `
+    <div class="method-card" onclick="pickWithdrawMethod(this,'${esc(m.name)}')">
+      <div class="method-emoji">${esc(m.icon || '💳')}</div>
+      <div class="method-name">${esc((m.name||'').toUpperCase())}</div>
+    </div>
+  `).join('');
 }
 
 function pickWithdrawAmount(btn, amt){
@@ -1851,243 +2274,223 @@ function validateAccountNumber(){
   const isValid = /^01[0-9]{9}$/.test(val);
   if(val.length === 0){
     input.classList.remove('invalid');
-    hint.textContent = 'à¦¸à¦ à¦¿à¦• à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦ªà§à¦°à¦¦à¦¾à¦¨ à¦•à¦°à§à¦¨';
+    hint.textContent = 'সঠিক নাম্বার প্রদান করুন';
     hint.className = 'account-number-hint';
   } else if(isValid){
     input.classList.remove('invalid');
-    hint.textContent = 'âœ“ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¸à¦ à¦¿à¦• à¦†à¦›à§‡';
+    hint.textContent = '✓ নাম্বার সঠিক আছে';
     hint.className = 'account-number-hint valid';
   } else {
     input.classList.add('invalid');
-    hint.textContent = 'à¦¸à¦ à¦¿à¦• à§§à§§ à¦¡à¦¿à¦œà¦¿à¦Ÿà§‡à¦° à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¦à¦¿à¦¨ (01XXXXXXXXX)';
+    hint.textContent = 'সঠিক ১১ ডিজিটের নাম্বার দিন (01XXXXXXXXX)';
     hint.className = 'account-number-hint invalid';
   }
   return isValid;
 }
 
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+async function doWithdraw(){
+  if(!currentUser){ showToast('আগে লগইন করুন'); return; }
+  const amt = parseFloat(document.getElementById('withdrawAmount').value);
+  if(!amt || amt<=0){ showToast('একটি সঠিক পরিমাণ লিখুন'); return; }
+  if(amt < minWithdrawAmount){ showToast('মিনিমাম উইথড্র ৳'+minWithdrawAmount+' টাকা'); return; }
+  if(amt > balance){ showToast('অপর্যাপ্ত ব্যালেন্স'); return; }
+  if(!selectedWithdrawMethod){ showToast('একটি পেমেন্ট মেথড বাছুন'); return; }
+  if(!validateAccountNumber()){ showToast('সঠিক অ্যাকাউন্ট নাম্বার দিন'); return; }
+
+  const acctNum = document.getElementById('accountNumberInput').value.trim();
+  try{
+    await DB.createWithdrawal({
+      uid: currentUser.id,
+      name: currentUser.name,
+      phone: currentUser.phone,
+      amount: amt,
+      method: selectedWithdrawMethod,
+      accountNumber: acctNum
+    });
+  }catch(e){
+    showToast(e.message || 'উইথড্র রিকোয়েস্ট পাঠাতে সমস্যা হয়েছে');
+    return;
+  }
+
+  closeSheet('withdrawSheet');
+  showProcessing(
+    'উইথড্র রিকোয়েস্ট পাঠানো হচ্ছে...',
+    'অনুগ্রহ করে অপেক্ষা করুন।',
+    ()=>{
+      showToast('✅ উইথড্র রিকোয়েস্ট পাঠানো হয়েছে — অনুমোদনের অপেক্ষায়');
+      document.getElementById('withdrawAmount').value = '';
+      document.getElementById('accountNumberInput').value = '';
+      document.getElementById('accountNumberBox').style.display = 'none';
+      validateAccountNumber();
+      document.querySelectorAll('#withdrawQuick button').forEach(b=>b.classList.remove('selected'));
+      document.querySelectorAll('#withdrawMethodGrid .method-card').forEach(c=>c.classList.remove('selected'));
+      selectedWithdrawMethod = null;
+    },
+    'রিকোয়েস্ট জমা হয়েছে!',
+    'অ্যাডমিন অনুমোদন দিলে আপনার অ্যাকাউন্টে টাকা পাঠানো হবে।'
+  );
 }
 
-const transactions = [];
-
-function addTx(name, amount, type){
-  transactions.unshift({name, amount, type, time:'Just now'});
-  renderTx();
-}
+/* ================================================ TRANSACTION LISTS ===== */
 
 function renderTx(){
   const list = document.getElementById('txList');
-  const seed = transactions.length ? transactions : [
-    {name:'Deposit - bKash', amount:2000, type:'plus', time:'2 min ago'},
-    {name:'Task Reward', amount:8, type:'plus', time:'10 min ago'},
-    {name:'Withdraw - Nagad', amount:300, type:'minus', time:'1 hr ago'},
-    {name:'Referral Bonus', amount:50, type:'plus', time:'3 hr ago'},
-  ];
-  list.innerHTML = seed.slice(0,4).map(tx=>`
+  if(!list) return;
+  if(!myTransactions.length){
+    list.innerHTML = '<div class="admin-note">এখনো কোনো লেনদেন নেই।</div>';
+    return;
+  }
+  list.innerHTML = myTransactions.slice(0,5).map(tx=>{
+    const chip = tx.status !== 'approved'
+      ? `<span class="tx-status-chip ${tx.status}">${tx.status.toUpperCase()}</span>` : '';
+    return `
     <div class="tx-item">
       <div class="tx-left">
-        <span class="tx-name">${tx.name}</span>
-        <span class="tx-time">${tx.time}</span>
+        <span class="tx-name">${esc(tx.title)}${chip}</span>
+        <span class="tx-time">${timeAgo(tx.createdAt)}</span>
       </div>
-      <div class="tx-amount ${tx.type}">${tx.type==='plus'?'+':'-'}à§³${tx.amount}</div>
-    </div>
-  `).join('');
-  renderStatement();
+      <div class="tx-amount ${tx.type}">${tx.type==='plus'?'+':'-'}৳${money(tx.amount)}</div>
+    </div>`;
+  }).join('');
 }
 
 function iconForTx(name){
-  if(name.includes('Deposit')) return {icon:'â†“', bg:'#fef3c7', color:'#b45309'};
-  if(name.includes('Withdraw')) return {icon:'â†‘', bg:'#fee2e2', color:'#dc2626'};
-  if(name.includes('Plan Purchased')) return {icon:'ðŸ“¦', bg:'#dbeafe', color:'#2563eb'};
-  return {icon:'ðŸ’°', bg:'#dcfce7', color:'#16a34a'};
+  if(name.includes('Deposit'))  return {icon:'↓',  bg:'#fef3c7', color:'#b45309'};
+  if(name.includes('Withdraw')) return {icon:'↑',  bg:'#fee2e2', color:'#dc2626'};
+  if(name.includes('Plan'))     return {icon:'📦', bg:'#dbeafe', color:'#2563eb'};
+  return {icon:'💰', bg:'#dcfce7', color:'#16a34a'};
 }
 
 function renderStatement(){
   const body = document.getElementById('statementBody');
   if(!body) return;
-  const seed = transactions.filter(t => t.name.includes('Deposit') || t.name.includes('Withdraw'));
-  const shown = seed.length ? seed : [
-    {name:'Deposit', amount:500, type:'plus', time:'09:36 PM', status:'pending'},
-    {name:'Withdraw', amount:100, type:'minus', time:'09:03 PM', status:'approved'},
-  ];
-  document.getElementById('statementBalance').textContent = balance.toFixed(2);
-  const credit = shown.filter(t=>t.type==='plus').reduce((s,t)=>s+t.amount,0);
-  const debit = shown.filter(t=>t.type==='minus').reduce((s,t)=>s+t.amount,0);
-  document.getElementById('statementCredit').textContent = 'à§³' + credit;
-  document.getElementById('statementDebit').textContent = 'à§³' + debit;
 
-  const todayLabel = new Date().toLocaleDateString('en-US');
-  body.innerHTML = `<div class="statement-date-label">${todayLabel}</div>` + shown.map(tx=>{
-    const meta = iconForTx(tx.name);
-    const status = tx.status || (tx.type==='plus' ? 'approved' : 'approved');
-    return `
+  const el = document.getElementById('statementBalance');
+  if(el) el.textContent = money(balance);
+
+  const approved = myTransactions.filter(t => t.status === 'approved');
+  const credit = approved.filter(t=>t.type==='plus').reduce((s,t)=>s+Number(t.amount),0);
+  const debit  = approved.filter(t=>t.type==='minus').reduce((s,t)=>s+Number(t.amount),0);
+  document.getElementById('statementCredit').textContent = '৳' + money(credit);
+  document.getElementById('statementDebit').textContent  = '৳' + money(debit);
+
+  if(!myTransactions.length){
+    body.innerHTML = '<div class="admin-note">কোনো লেনদেন নেই।</div>';
+    return;
+  }
+
+  // group by date
+  const groups = {};
+  myTransactions.forEach(tx=>{
+    const d = new Date(tx.createdAt).toLocaleDateString('en-US');
+    (groups[d] = groups[d] || []).push(tx);
+  });
+
+  body.innerHTML = Object.keys(groups).map(date=>{
+    return `<div class="statement-date-label">${date}</div>` + groups[date].map(tx=>{
+      const meta = iconForTx(tx.title);
+      const reason = findRejectReason(tx);
+      return `
       <div class="statement-item">
         <div class="statement-item-icon" style="background:${meta.bg};color:${meta.color};">${meta.icon}</div>
         <div class="statement-item-body">
-          <div class="statement-item-name">${tx.name}</div>
-          <div class="statement-item-time">ðŸ• ${tx.time}</div>
+          <div class="statement-item-name">${esc(tx.title)}</div>
+          <div class="statement-item-time">🕐 ${timeOf(tx.createdAt)}</div>
+          ${reason ? `<div class="reject-reason">কারণ: ${esc(reason)}</div>` : ''}
         </div>
         <div class="statement-item-right">
-          <div class="statement-item-amount ${tx.type}">${tx.type==='plus'?'+':'-'}à§³${tx.amount}</div>
-          <div class="statement-status ${status}">${status.toUpperCase()}</div>
+          <div class="statement-item-amount ${tx.type}">${tx.type==='plus'?'+':'-'}৳${money(tx.amount)}</div>
+          <div class="statement-status ${tx.status}">${tx.status.toUpperCase()}</div>
         </div>
-      </div>
-    `;
+      </div>`;
+    }).join('');
   }).join('');
 }
 
-// Simulated live feed entries, capped at à§³500.
-const liveFeedEvents = [
-  {name:'Task Reward', type:'plus'},
-  {name:'Ad Watch Bonus', type:'plus'},
-  {name:'Daily Login Bonus', type:'plus'},
-  {name:'Referral Bonus', type:'plus'},
-];
-function pushLiveFeedEntry(){
-  const evt = liveFeedEvents[Math.floor(Math.random()*liveFeedEvents.length)];
-  const amount = Math.floor(Math.random()*496) + 5; // à§³5 - à§³500
-  transactions.unshift({name:evt.name, amount, type:evt.type, time:'Just now'});
-  if(transactions.length > 20) transactions.pop();
-  renderTx();
+function findRejectReason(tx){
+  if(tx.status !== 'rejected' || !tx.refId) return '';
+  const src = tx.refType === 'deposit'
+    ? myDeposits.find(d => d.id === tx.refId)
+    : myWithdrawals.find(w => w.id === tx.refId);
+  return src ? (src.note || '') : '';
 }
-setInterval(pushLiveFeedEntry, 9000);
 
-function showProcessing(title, sub, onDone){
+/* ==================================================== PROCESSING ======== */
+
+function showProcessing(title, sub, onDone, doneTitle, doneSub){
   document.getElementById('processingContent').innerHTML = `
     <div class="spinner"></div>
-    <div class="processing-title">${title}</div>
-    <div class="processing-sub">${sub}</div>
-  `;
+    <div class="processing-title">${esc(title)}</div>
+    <div class="processing-sub">${esc(sub)}</div>`;
   openSheet('processingSheet');
   setTimeout(()=>{
     document.getElementById('processingContent').innerHTML = `
-      <div class="success-check">âœ“</div>
-      <div class="processing-title">à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦¹à¦¯à¦¼à§‡à¦›à§‡!</div>
-      <div class="processing-sub">à¦†à¦ªà¦¨à¦¾à¦° à¦…à¦¨à§à¦°à§‹à¦§ à¦¸à¦«à¦²à¦­à¦¾à¦¬à§‡ à¦ªà§à¦°à¦¸à§‡à¦¸ à¦¹à¦¯à¦¼à§‡à¦›à§‡à¥¤</div>
-    `;
-    setTimeout(()=>{
-      closeSheet('processingSheet');
-      onDone();
-    }, 900);
-  }, 1400);
+      <div class="success-check">✓</div>
+      <div class="processing-title">${esc(doneTitle || 'সম্পন্ন হয়েছে!')}</div>
+      <div class="processing-sub">${esc(doneSub || 'আপনার অনুরোধ সফলভাবে প্রসেস হয়েছে।')}</div>`;
+    setTimeout(()=>{ closeSheet('processingSheet'); onDone && onDone(); }, 1100);
+  }, 1200);
 }
 
-function doDeposit(){
-  const amt = parseFloat(document.getElementById('depositAmount').value);
-  const trxInput = document.getElementById('depositTrxId');
-  const trxId = trxInput ? trxInput.value.trim() : '';
-  if(!amt || amt<=0){ showToast('à¦à¦•à¦Ÿà¦¿ à¦¸à¦ à¦¿à¦• à¦ªà¦°à¦¿à¦®à¦¾à¦£ à¦²à¦¿à¦–à§à¦¨'); return; }
-  if(amt < minDepositAmount){ showToast('à¦¸à¦°à§à¦¬à¦¨à¦¿à¦®à§à¦¨ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à§³'+minDepositAmount+' à¦Ÿà¦¾à¦•à¦¾'); return; }
-  if(!selectedMethod){ showToast('à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦®à§‡à¦¥à¦¡ à¦¬à¦¾à¦›à§à¦¨'); return; }
-  if(!trxId){
-    if(trxInput) trxInput.classList.add('invalid');
-    const hint=document.getElementById('trxidHint');
-    if(hint){ hint.textContent='TrxID à¦¨à¦¾ à¦¦à¦¿à¦²à§‡ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à¦°à¦¿à¦•à§‹à¦¯à¦¼à§‡à¦¸à§à¦Ÿ à¦ªà¦¾à¦ à¦¾à¦¨à§‹ à¦¯à¦¾à¦¬à§‡ à¦¨à¦¾'; hint.style.color='var(--red)'; }
-    showToast('TrxID à¦²à¦¿à¦–à§à¦¨');
-    return;
-  }
-  const method = selectedMethod;
-  closeSheet('depositSheet');
-  showProcessing('à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦ªà§à¦°à¦¸à§‡à¦¸ à¦¹à¦šà§à¦›à§‡...', 'à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦…à¦ªà§‡à¦•à§à¦·à¦¾ à¦•à¦°à§à¦¨, à¦à¦Ÿà¦¿ à¦•à¦¯à¦¼à§‡à¦• à¦¸à§‡à¦•à§‡à¦¨à§à¦¡ à¦¸à¦®à¦¯à¦¼ à¦¨à¦¿à¦¤à§‡ à¦ªà¦¾à¦°à§‡à¥¤', ()=>{
-    balance += amt;
-    fmtBalance();
-    addTx('Deposit - '+method, amt, 'plus');
-    showToast('à§³'+amt+' à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à¦¸à¦«à¦² à¦¹à¦¯à¦¼à§‡à¦›à§‡');
-    document.getElementById('depositAmount').value = '';
-    if(document.getElementById('depositTrxId')) document.getElementById('depositTrxId').value = '';
-    document.querySelectorAll('#depositQuick button').forEach(b=>b.classList.remove('selected'));
-    document.querySelectorAll('#methodGrid .method-card').forEach(c=>c.classList.remove('selected'));
-    document.getElementById('paymentInstruction')?.classList.remove('show');
-    selectedMethod = null;
-  });
-}
-
-function doWithdraw(){
-  const amt = parseFloat(document.getElementById('withdrawAmount').value);
-  if(!amt || amt<=0){ showToast('à¦à¦•à¦Ÿà¦¿ à¦¸à¦ à¦¿à¦• à¦ªà¦°à¦¿à¦®à¦¾à¦£ à¦²à¦¿à¦–à§à¦¨'); return; }
-  if(amt < minWithdrawAmount){ showToast('à¦®à¦¿à¦¨à¦¿à¦®à¦¾à¦® à¦‰à¦‡à¦¥à¦¡à§à¦° à§³'+minWithdrawAmount+' à¦Ÿà¦¾à¦•à¦¾'); return; }
-  if(amt > balance){ showToast('à¦…à¦ªà¦°à§à¦¯à¦¾à¦ªà§à¦¤ à¦¬à§à¦¯à¦¾à¦²à§‡à¦¨à§à¦¸'); return; }
-  if(!selectedWithdrawMethod){ showToast('à¦à¦•à¦Ÿà¦¿ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦®à§‡à¦¥à¦¡ à¦¬à¦¾à¦›à§à¦¨'); return; }
-  if(!validateAccountNumber()){ showToast('à¦¸à¦ à¦¿à¦• à¦à¦•à¦¾à¦‰à¦¨à§à¦Ÿ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¦à¦¿à¦¨'); return; }
-  const method = selectedWithdrawMethod;
-  const acctNum = document.getElementById('accountNumberInput').value.trim();
-  closeSheet('withdrawSheet');
-  showProcessing('à¦‰à¦‡à¦¥à¦¡à§à¦° à¦ªà§à¦°à¦¸à§‡à¦¸ à¦¹à¦šà§à¦›à§‡...', 'à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦…à¦ªà§‡à¦•à§à¦·à¦¾ à¦•à¦°à§à¦¨, à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦ªà¦¾à¦ à¦¾à¦¨à§‹ à¦¹à¦šà§à¦›à§‡à¥¤', ()=>{
-    balance -= amt;
-    fmtBalance();
-    addTx('Withdraw - '+method+' ('+acctNum+')', amt, 'minus');
-    showToast('à§³'+amt+' à¦‰à¦¤à§à¦¤à§‹à¦²à¦¨ à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
-    document.getElementById('withdrawAmount').value = '';
-    document.getElementById('accountNumberInput').value = '';
-    document.getElementById('accountNumberBox').style.display = 'none';
-    validateAccountNumber();
-    document.querySelectorAll('#withdrawQuick button').forEach(b=>b.classList.remove('selected'));
-    document.querySelectorAll('#withdrawMethodGrid .method-card').forEach(c=>c.classList.remove('selected'));
-    selectedWithdrawMethod = null;
-  });
-}
-
-// ===== Dynamic Task Plans (editable via Admin Panel) =====
-let plansData = [
-  { name:'Basic', price:500, days:60, adsPerDay:3, rewardPerAd:100 },
-  { name:'Standard', price:1000, days:60, adsPerDay:6, rewardPerAd:100 },
-  { name:'Pro', price:2000, days:60, adsPerDay:12, rewardPerAd:100 },
-];
+/* ======================================================== PLANS ========= */
 
 function renderPackages(){
   const list = document.getElementById('packagesList');
   if(!list) return;
+  if(!plansData.length){
+    list.innerHTML = '<div class="admin-note">এই মুহূর্তে কোনো প্ল্যান নেই।</div>';
+    return;
+  }
   list.innerHTML = plansData.map((p, idx)=>{
     const dailyIncome = p.adsPerDay * p.rewardPerAd;
     const cap = p.days * dailyIncome;
     return `
     <div class="plan-card" onclick="selectPlan(${idx}, this)">
       <div class="plan-top">
-        <div class="plan-name">${p.name}</div>
-        <div class="plan-price">à§³${p.price.toLocaleString()}</div>
+        <div class="plan-name">${esc(p.name)}</div>
+        <div class="plan-price">৳${Number(p.price).toLocaleString()}</div>
       </div>
       <div class="plan-grid">
-        <div class="plan-stat"><span class="plan-stat-label">à¦®à§‡à¦¯à¦¼à¦¾à¦¦</span><span class="plan-stat-value">ðŸ“… ${p.days} Days</span></div>
-        <div class="plan-stat"><span class="plan-stat-label">à¦ªà§à¦°à¦¤à¦¿à¦¦à¦¿à¦¨ à¦Ÿà¦¾à¦¸à§à¦• à¦²à¦¿à¦®à¦¿à¦Ÿ</span><span class="plan-stat-value">ðŸ“‹ up to ${p.adsPerDay} ads</span></div>
-        <div class="plan-stat"><span class="plan-stat-label">à¦ªà§à¦°à¦¤à¦¿ à¦…à§à¦¯à¦¾à¦¡ à¦°à¦¿à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡</span><span class="plan-stat-value">ðŸª™ à§³${p.rewardPerAd} / ad</span></div>
-        <div class="plan-stat daily-income-stat"><span class="plan-stat-label">DAILY INCOME</span><span class="plan-stat-value">ðŸª™ à§³${dailyIncome.toLocaleString()}</span></div>
-        <div class="plan-stat"><span class="plan-stat-label">à¦¸à¦°à§à¦¬à§‹à¦šà§à¦š à¦¸à¦®à§à¦­à¦¾à¦¬à§à¦¯ à¦†à¦¯à¦¼*</span><span class="plan-stat-value">ðŸ“ˆ up to à§³${cap.toLocaleString()}</span></div>
+        <div class="plan-stat"><span class="plan-stat-label">মেয়াদ</span><span class="plan-stat-value">📅 ${p.days} Days</span></div>
+        <div class="plan-stat"><span class="plan-stat-label">প্রতিদিন টাস্ক লিমিট</span><span class="plan-stat-value">📋 up to ${p.adsPerDay} ads</span></div>
+        <div class="plan-stat"><span class="plan-stat-label">প্রতি অ্যাড রিওয়ার্ড</span><span class="plan-stat-value">🪙 ৳${p.rewardPerAd} / ad</span></div>
+        <div class="plan-stat daily-income-stat"><span class="plan-stat-label">DAILY INCOME</span><span class="plan-stat-value">🪙 ৳${dailyIncome.toLocaleString()}</span></div>
+        <div class="plan-stat"><span class="plan-stat-label">সর্বোচ্চ সম্ভাব্য আয়*</span><span class="plan-stat-value">📈 up to ৳${cap.toLocaleString()}</span></div>
       </div>
     </div>`;
   }).join('');
 }
 
-function selectPlan(idx, card){
+async function selectPlan(idx, card){
+  if(!currentUser){ showToast('আগে লগইন করুন'); return; }
   const p = plansData[idx];
   if(!p) return;
   if(p.price > balance){
-    showToast('à¦…à¦ªà¦°à§à¦¯à¦¾à¦ªà§à¦¤ à¦¬à§à¦¯à¦¾à¦²à§‡à¦¨à§à¦¸ â€” à¦†à¦—à§‡ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à¦•à¦°à§à¦¨');
+    showToast('অপর্যাপ্ত ব্যালেন্স — আগে ডিপোজিট করুন');
     return;
   }
   document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));
   if(card) card.classList.add('selected');
   closeSheet('packagesSheet');
-  showProcessing('à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦à¦•à¦Ÿà¦¿à¦­à§‡à¦Ÿ à¦¹à¦šà§à¦›à§‡...', 'à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦…à¦ªà§‡à¦•à§à¦·à¦¾ à¦•à¦°à§à¦¨à¥¤', ()=>{
-    balance -= p.price;
-    fmtBalance();
-    addTx(p.name+' Plan Purchased', p.price, 'minus');
-    showToast(p.name+' à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦à¦•à¦Ÿà¦¿à¦­ à¦¹à¦¯à¦¼à§‡à¦›à§‡ â€” '+p.days+' à¦¦à¦¿à¦¨à§‡à¦° à¦œà¦¨à§à¦¯ à¦ªà§à¦°à¦¤à¦¿à¦¦à¦¿à¦¨ '+p.adsPerDay+'à¦Ÿà¦¿ à¦…à§à¦¯à¦¾à¦¡ à¦Ÿà¦¾à¦¸à§à¦• à¦†à¦¨à¦²à¦•');
-    activePlanName = p.name;
-    dailyTaskQuota = p.adsPerDay;
-    rewardPerTask = p.rewardPerAd;
-    dailyTasksDone = 0;
-    todayEarned = 0;
-    taskActivityLog = [];
-    renderTaskCenter();
+
+  await DB.adjustBalance(currentUser.id, -p.price, p.name + ' Plan Purchased');
+  await DB.updateUser(currentUser.id, {
+    plan: {
+      name: p.name, price: p.price, days: p.days,
+      adsPerDay: p.adsPerDay, rewardPerAd: p.rewardPerAd,
+      activatedAt: DB.nowISO(),
+      tasksToday: 0, earnedToday: 0,
+      lastTaskDate: new Date().toDateString()
+    }
+  });
+
+  showProcessing('প্ল্যান একটিভেট হচ্ছে...', 'অনুগ্রহ করে অপেক্ষা করুন।', ()=>{
+    showToast(p.name + ' প্ল্যান একটিভ হয়েছে');
   });
 }
 
-// ===== Task Center =====
+/* ==================================================== TASK CENTER ======= */
+
 let activePlanName = null;
 let dailyTaskQuota = 0;
 let rewardPerTask = 0;
@@ -2097,101 +2500,91 @@ let taskActivityLog = [];
 let taskInProgress = false;
 
 function renderTaskCenter(){
-  const total = dailyTaskQuota;
-  const done = dailyTasksDone;
-  document.getElementById('taskDoneCount').textContent = done;
-  document.getElementById('taskTotalCount').textContent = total;
-  document.getElementById('taskRemainingLabel').textContent = Math.max(total - done, 0) + ' Tasks';
-  document.getElementById('taskEarnedLabel').textContent = 'à§³' + todayEarned.toFixed(2);
+  const total = dailyTaskQuota, done = dailyTasksDone;
+  const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('taskDoneCount', done);
+  set('taskTotalCount', total);
+  set('taskRemainingLabel', Math.max(total-done,0) + ' Tasks');
+  set('taskEarnedLabel', '৳' + money(todayEarned));
 
   const badge = document.getElementById('taskActiveBadge');
-  if(activePlanName){
-    badge.textContent = 'âœ“ ACTIVE';
-    badge.classList.remove('inactive');
-  } else {
-    badge.textContent = 'NO PLAN';
-    badge.classList.add('inactive');
+  if(badge){
+    if(activePlanName){ badge.textContent='✓ ACTIVE'; badge.classList.remove('inactive'); }
+    else { badge.textContent='NO PLAN'; badge.classList.add('inactive'); }
   }
 
-  const circumference = 326.7;
-  const pct = total > 0 ? Math.min(done/total, 1) : 0;
-  document.getElementById('progressRingFg').style.strokeDashoffset = circumference * (1 - pct);
+  const ring = document.getElementById('progressRingFg');
+  if(ring){
+    const c = 326.7;
+    ring.style.strokeDashoffset = c * (1 - (total>0 ? Math.min(done/total,1) : 0));
+  }
 
   const btn = document.getElementById('startTaskBtn');
-  btn.disabled = taskInProgress || total === 0 || done >= total;
+  if(btn) btn.disabled = taskInProgress || total===0 || done>=total;
 
   const list = document.getElementById('taskActivityList');
-  if(taskActivityLog.length === 0){
-    list.className = 'task-activity-empty';
-    list.textContent = 'No tasks completed today.';
-  } else {
-    list.className = '';
-    list.innerHTML = taskActivityLog.map(item=>`
-      <div class="task-activity-item">
-        <span>Ad Task #${item.num}</span>
-        <span style="color:var(--green);font-weight:700;">+à§³${item.reward}</span>
-      </div>
-    `).join('');
+  if(list){
+    if(!taskActivityLog.length){
+      list.className = 'task-activity-empty';
+      list.textContent = 'No tasks completed today.';
+    } else {
+      list.className = '';
+      list.innerHTML = taskActivityLog.map(item=>`
+        <div class="task-activity-item">
+          <span>Ad Task #${item.num}</span>
+          <span style="color:var(--green);font-weight:700;">+৳${item.reward}</span>
+        </div>`).join('');
+    }
   }
 }
 
-function startTask(){
-  if(dailyTaskQuota === 0){
-    showToast('à¦•à§‹à¦¨à§‹ à¦à¦•à¦Ÿà¦¿à¦­ à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦¨à§‡à¦‡ â€” à¦†à¦—à§‡ à¦à¦•à¦Ÿà¦¿ à¦ªà§à¦¯à¦¾à¦•à§‡à¦œ à¦•à¦¿à¦¨à§à¦¨');
-    return;
-  }
-  if(dailyTasksDone >= dailyTaskQuota){
-    showToast('à¦†à¦œà¦•à§‡à¦° à¦¸à¦¬ à¦Ÿà¦¾à¦¸à§à¦• à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
-    return;
-  }
+async function startTask(){
+  if(!currentUser){ showToast('আগে লগইন করুন'); return; }
+  if(dailyTaskQuota === 0){ showToast('কোনো একটিভ প্ল্যান নেই — আগে একটি প্যাকেজ কিনুন'); return; }
+  if(dailyTasksDone >= dailyTaskQuota){ showToast('আজকের সব টাস্ক সম্পন্ন হয়েছে'); return; }
+
   taskInProgress = true;
   renderTaskCenter();
-  showProcessing('à¦…à§à¦¯à¦¾à¦¡ à¦¦à§‡à¦–à¦¾à¦¨à§‹ à¦¹à¦šà§à¦›à§‡...', 'à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦…à¦ªà§‡à¦•à§à¦·à¦¾ à¦•à¦°à§à¦¨, à¦Ÿà¦¾à¦¸à§à¦• à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦¹à¦šà§à¦›à§‡à¥¤', ()=>{
+
+  showProcessing('অ্যাড দেখানো হচ্ছে...', 'অনুগ্রহ করে অপেক্ষা করুন।', async ()=>{
     dailyTasksDone += 1;
     todayEarned += rewardPerTask;
-    balance += rewardPerTask;
-    fmtBalance();
-    addTx('Task Reward', rewardPerTask, 'plus');
-    taskActivityLog.unshift({num:dailyTasksDone, reward:rewardPerTask});
+    taskActivityLog.unshift({num: dailyTasksDone, reward: rewardPerTask});
     taskInProgress = false;
+
+    await DB.adjustBalance(currentUser.id, rewardPerTask, 'Task Reward');
+    const plan = Object.assign({}, currentUser.plan || {}, {
+      tasksToday: dailyTasksDone,
+      earnedToday: todayEarned,
+      lastTaskDate: new Date().toDateString()
+    });
+    await DB.updateUser(currentUser.id, { plan });
+
     renderTaskCenter();
-    showToast('+à§³'+rewardPerTask+' à¦Ÿà¦¾à¦¸à§à¦• à¦°à¦¿à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦¯à§‹à¦— à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+    showToast('+৳'+rewardPerTask+' টাস্ক রিওয়ার্ড যোগ হয়েছে');
   });
 }
 
-function resetTask(){
-  dailyTasksDone = 0;
-  todayEarned = 0;
-  taskActivityLog = [];
-  renderTaskCenter();
-  showToast('à¦†à¦œà¦•à§‡à¦° à¦Ÿà¦¾à¦¸à§à¦• à¦°à¦¿à¦¸à§‡à¦Ÿ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
-}
+/* ======================================================== PROFILE ======= */
 
-renderTx();
-fmtBalance();
-renderTaskCenter();
-
-function saveRegisteredName(){
-  const input = document.getElementById('registerNameInput');
-  const val = input.value.trim();
-  if(!val){ showToast('à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦® à¦²à¦¿à¦–à§à¦¨'); return; }
+async function saveRegisteredName(){
+  if(!currentUser){ showToast('আগে লগইন করুন'); return; }
+  const val = document.getElementById('registerNameInput').value.trim();
+  if(!val){ showToast('অনুগ্রহ করে আপনার নাম লিখুন'); return; }
+  await DB.updateUser(currentUser.id, { name: val });
   registeredName = val;
   document.getElementById('usernameDisplay').textContent = val;
   closeSheet('registerSheet');
-  showToast('à¦¨à¦¾à¦® à¦†à¦ªà¦¡à§‡à¦Ÿ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+  showToast('নাম আপডেট হয়েছে');
 }
 
-// ===== Login / Register system (in-memory only, session-scoped) =====
-const registeredUsers = {
-  '01712345678': { name: 'User', password: '123456' }
-};
-let currentPhone = null;
+/* ==================================================== AUTH ============== */
 
 function switchAuthTab(tab){
   const loginBtn = document.getElementById('tabLoginBtn');
-  const regBtn = document.getElementById('tabRegisterBtn');
-  const loginForm = document.getElementById('loginForm');
-  const regForm = document.getElementById('registerForm');
+  const regBtn   = document.getElementById('tabRegisterBtn');
+  const loginForm= document.getElementById('loginForm');
+  const regForm  = document.getElementById('registerForm');
   document.getElementById('loginError').textContent = '';
   document.getElementById('registerError').textContent = '';
   if(tab === 'login'){
@@ -2203,172 +2596,60 @@ function switchAuthTab(tab){
   }
 }
 
-function doLogin(){
+async function doLogin(){
   const phone = document.getElementById('loginPhone').value.trim();
-  const pass = document.getElementById('loginPassword').value;
+  const pass  = document.getElementById('loginPassword').value;
   const errEl = document.getElementById('loginError');
-  if(!/^01[0-9]{9}$/.test(phone)){ errEl.textContent = 'à¦¸à¦ à¦¿à¦• à¦«à§‹à¦¨ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¦à¦¿à¦¨'; return; }
-  if(!pass){ errEl.textContent = 'à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦¦à¦¿à¦¨'; return; }
-  const user = registeredUsers[phone];
-  if(!user || user.password !== pass){
-    errEl.textContent = 'à¦«à§‹à¦¨ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦…à¦¥à¦¬à¦¾ à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦­à§à¦²';
-    return;
+  if(!/^01[0-9]{9}$/.test(phone)){ errEl.textContent = 'সঠিক ফোন নাম্বার দিন'; return; }
+  if(!pass){ errEl.textContent = 'পাসওয়ার্ড দিন'; return; }
+  try{
+    const user = await DB.loginUser(phone, pass);
+    errEl.textContent = '';
+    enterApp(user);
+    showToast('স্বাগতম, ' + user.name + '!');
+  }catch(e){
+    errEl.textContent = e.message;
   }
-  errEl.textContent = '';
-  completeAuth(user.name, phone);
 }
 
-function doRegister(){
-  const name = document.getElementById('regName').value.trim();
-  const phone = document.getElementById('regPhone').value.trim();
-  const pass = document.getElementById('regPassword').value;
+async function doRegister(){
+  const name    = document.getElementById('regName').value.trim();
+  const phone   = document.getElementById('regPhone').value.trim();
+  const pass    = document.getElementById('regPassword').value;
   const confirm = document.getElementById('regConfirmPassword').value;
-  const errEl = document.getElementById('registerError');
+  const errEl   = document.getElementById('registerError');
 
-  if(!name){ errEl.textContent = 'à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦® à¦¦à¦¿à¦¨'; return; }
-  if(!/^01[0-9]{9}$/.test(phone)){ errEl.textContent = 'à¦¸à¦ à¦¿à¦• à§§à§§ à¦¡à¦¿à¦œà¦¿à¦Ÿà§‡à¦° à¦«à§‹à¦¨ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¦à¦¿à¦¨'; return; }
-  if(registeredUsers[phone]){ errEl.textContent = 'à¦à¦‡ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¦à¦¿à¦¯à¦¼à§‡ à¦‡à¦¤à¦¿à¦®à¦§à§à¦¯à§‡ à¦…à§à¦¯à¦¾à¦•à¦¾à¦‰à¦¨à§à¦Ÿ à¦†à¦›à§‡, Login à¦•à¦°à§à¦¨'; return; }
-  if(pass.length < 6){ errEl.textContent = 'à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦•à¦®à¦ªà¦•à§à¦·à§‡ à§¬ à¦•à§à¦¯à¦¾à¦°à§‡à¦•à§à¦Ÿà¦¾à¦° à¦¹à¦¤à§‡ à¦¹à¦¬à§‡'; return; }
-  if(pass !== confirm){ errEl.textContent = 'à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦®à¦¿à¦²à¦›à§‡ à¦¨à¦¾'; return; }
+  if(!name){ errEl.textContent = 'আপনার নাম দিন'; return; }
+  if(!/^01[0-9]{9}$/.test(phone)){ errEl.textContent = 'সঠিক ১১ ডিজিটের ফোন নাম্বার দিন'; return; }
+  if(pass.length < 6){ errEl.textContent = 'পাসওয়ার্ড কমপক্ষে ৬ ক্যারেক্টার হতে হবে'; return; }
+  if(pass !== confirm){ errEl.textContent = 'পাসওয়ার্ড মিলছে না'; return; }
 
-  errEl.textContent = '';
-  registeredUsers[phone] = { name, password: pass };
-  completeAuth(name, phone);
-}
-
-function completeAuth(name, phone){
-  currentPhone = phone;
-  registeredName = name;
-  document.getElementById('usernameDisplay').textContent = name;
-  const code = (name.split(' ')[0].toUpperCase().slice(0,5) || 'USER') + '-' + Math.floor(1000 + Math.random()*9000);
-  const referInput = document.querySelector('#referSheet input[type="text"]');
-  if(referInput) referInput.value = code;
-  document.getElementById('authScreen').style.display = 'none';
-  showToast('à¦¸à§à¦¬à¦¾à¦—à¦¤à¦®, ' + name + '!');
-}
-
-// ===== Admin Panel =====
-function switchAdminTab(tab){
-  const tabs = {content:'adminTabContentBtn', plans:'adminTabPlansBtn', settings:'adminTabSettingsBtn', activity:'adminTabActivityBtn'};
-  const panels = {content:'adminContentPanel', plans:'adminPlansPanel', settings:'adminSettingsPanel', activity:'adminActivityPanel'};
-  Object.keys(tabs).forEach(key=>{
-    document.getElementById(tabs[key]).classList.toggle('active', key===tab);
-    document.getElementById(panels[key]).style.display = (key===tab) ? 'block' : 'none';
-  });
-  if(tab === 'plans') renderAdminPlansList();
-  if(tab === 'activity') renderAdminActivity();
-}
-
-function renderAdminPanel(){
-  // Content tab fields
-  document.getElementById('adminBannerTitle').value = document.getElementById('bannerTitleEl').textContent;
-  document.getElementById('adminBannerSub1').value = document.getElementById('bannerSub1El').textContent;
-  document.getElementById('adminBannerSub2').value = document.getElementById('bannerSub2El').textContent;
-  document.getElementById('adminAppName').value = document.getElementById('authAppNameEl').textContent;
-  // Settings tab fields
-  document.getElementById('adminMinDeposit').value = minDepositAmount;
-  document.getElementById('adminMinWithdraw').value = minWithdrawAmount;
-  document.getElementById('adminSupportPhone').value = supportPhone;
-  document.getElementById('adminSupportEmail').value = supportEmail;
-  renderAdminPlansList();
-}
-
-function saveAdminContent(){
-  document.getElementById('bannerTitleEl').textContent = document.getElementById('adminBannerTitle').value;
-  document.getElementById('bannerSub1El').textContent = document.getElementById('adminBannerSub1').value;
-  document.getElementById('bannerSub2El').textContent = document.getElementById('adminBannerSub2').value;
-  document.getElementById('authAppNameEl').textContent = document.getElementById('adminAppName').value;
-  showToast('à¦•à¦¨à§à¦Ÿà§‡à¦¨à§à¦Ÿ à¦¸à§‡à¦­ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
-}
-
-function saveAdminSettings(){
-  const md = parseFloat(document.getElementById('adminMinDeposit').value);
-  const mw = parseFloat(document.getElementById('adminMinWithdraw').value);
-  if(md > 0) minDepositAmount = md;
-  if(mw > 0) minWithdrawAmount = mw;
-  supportPhone = document.getElementById('adminSupportPhone').value;
-  supportEmail = document.getElementById('adminSupportEmail').value;
-
-  document.getElementById('minDepNoteEl').textContent = 'âš ï¸ à¦¸à¦°à§à¦¬à¦¨à¦¿à¦®à§à¦¨ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à§³' + minDepositAmount + ' à¦Ÿà¦¾à¦•à¦¾';
-  document.getElementById('autoPaySubEl').textContent = 'à¦®à¦¿à¦¨à¦¿à¦®à¦¾à¦® à¦‰à¦‡à¦¥à¦¡à§à¦° ' + minWithdrawAmount + ' à¦Ÿà¦¾à¦•à¦¾à¥¤ à¦‰à¦‡à¦¥à¦¡à§à¦° à¦¦à§‡à¦¯à¦¼à¦¾à¦° à¦¸à¦¾à¦¥à§‡ à¦¸à¦¾à¦¥à§‡ à¦…à¦Ÿà§‹à¦®à§à¦¯à¦¾à¦Ÿà¦¿à¦•à¦­à¦¾à¦¬à§‡ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦ªà§‡à¦¯à¦¼à§‡ à¦¯à¦¾à¦¬à§‡à¦¨à¥¤';
-  document.getElementById('supportPhoneEl').textContent = supportPhone;
-  document.getElementById('supportEmailEl').textContent = supportEmail;
-  showToast('à¦¸à§‡à¦Ÿà¦¿à¦‚à¦¸ à¦¸à§‡à¦­ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
-}
-
-function renderAdminPlansList(){
-  const el = document.getElementById('adminPlansList');
-  if(!el) return;
-  el.innerHTML = plansData.map((p, idx)=>{
-    const cap = p.days * p.adsPerDay * p.rewardPerAd;
-    return `
-    <div class="admin-plan-card">
-      <div class="admin-plan-header">
-        <input type="text" id="ap_name_${idx}" value="${p.name}">
-        <span style="font-size:12px;color:var(--muted);">#${idx+1}</span>
-      </div>
-      <div class="admin-plan-grid">
-        <div class="field"><label>Price (à§³)</label><input type="number" id="ap_price_${idx}" value="${p.price}"></div>
-        <div class="field"><label>Validity (days)</label><input type="number" id="ap_days_${idx}" value="${p.days}"></div>
-        <div class="field"><label>Ads / day</label><input type="number" id="ap_ads_${idx}" value="${p.adsPerDay}"></div>
-        <div class="field"><label>Reward / ad (à§³)</label><input type="number" id="ap_reward_${idx}" value="${p.rewardPerAd}"></div>
-      </div>
-      <div class="admin-plan-cap">Max possible earning (auto-calculated): à§³${cap.toLocaleString()}</div>
-      <div class="admin-plan-actions">
-        <button class="save-btn" onclick="saveAdminPlan(${idx})">Save</button>
-        <button class="delete-btn" onclick="deleteAdminPlan(${idx})">Delete</button>
-      </div>
-    </div>`;
-  }).join('') + `<button class="admin-add-plan-btn" onclick="addAdminPlan()">+ Add New Plan</button>`;
-}
-
-function saveAdminPlan(idx){
-  const name = document.getElementById('ap_name_'+idx).value.trim() || 'Plan';
-  const price = parseFloat(document.getElementById('ap_price_'+idx).value) || 0;
-  const days = parseInt(document.getElementById('ap_days_'+idx).value) || 1;
-  const ads = parseInt(document.getElementById('ap_ads_'+idx).value) || 0;
-  const reward = parseFloat(document.getElementById('ap_reward_'+idx).value) || 0;
-  plansData[idx] = { name, price, days, adsPerDay: ads, rewardPerAd: reward };
-  renderAdminPlansList();
-  renderPackages();
-  showToast(name + ' à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦†à¦ªà¦¡à§‡à¦Ÿ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
-}
-
-function deleteAdminPlan(idx){
-  plansData.splice(idx, 1);
-  renderAdminPlansList();
-  renderPackages();
-  showToast('à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦®à§à¦›à§‡ à¦«à§‡à¦²à¦¾ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
-}
-
-function addAdminPlan(){
-  plansData.push({ name:'New Plan', price:500, days:30, adsPerDay:2, rewardPerAd:100 });
-  renderAdminPlansList();
-  renderPackages();
-}
-
-function renderAdminActivity(){
-  const txEl = document.getElementById('adminTxList');
-  const taskEl = document.getElementById('adminTaskList');
-  if(txEl){
-    txEl.innerHTML = transactions.length ? transactions.slice(0,15).map(tx=>`
-      <div class="admin-log-item">
-        <span>${tx.name}</span>
-        <span style="color:${tx.type==='plus'?'#16a34a':'#dc2626'};font-weight:700;">${tx.type==='plus'?'+':'-'}à§³${tx.amount}</span>
-      </div>
-    `).join('') : `<div class="admin-note">No transactions yet this session.</div>`;
-  }
-  if(taskEl){
-    taskEl.innerHTML = taskActivityLog.length ? taskActivityLog.map(item=>`
-      <div class="admin-log-item">
-        <span>Ad Task #${item.num}</span>
-        <span style="color:#16a34a;font-weight:700;">+à§³${item.reward}</span>
-      </div>
-    `).join('') : `<div class="admin-note">No tasks completed today.</div>`;
+  try{
+    const user = await DB.registerUser(name, phone, pass);
+    errEl.textContent = '';
+    enterApp(user);
+    showToast('অ্যাকাউন্ট তৈরি হয়েছে, স্বাগতম ' + name + '!');
+  }catch(e){
+    errEl.textContent = e.message;
   }
 }
 
-renderPackages();
+function doLogout(){
+  while(unsubscribers.length){ try{ unsubscribers.pop()(); }catch(e){} }
+  DB.clearSession();
+  currentUser = null;
+  balance = 0;
+  myTransactions = [];
+  closeAllSheets();
+  document.getElementById('authScreen').style.display = '';
+  document.getElementById('loginPhone').value = '';
+  document.getElementById('loginPassword').value = '';
+  switchAuthTab('login');
+  fmtBalance();
+}
+
+/* ========================================================== GO ========== */
+boot();
 </script>
 
 </body>

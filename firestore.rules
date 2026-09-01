@@ -1,0 +1,107 @@
+rules_version = '2';
+
+// ============================================================================
+// Task Wallet — Firestore security rules
+//
+// Paste this whole file into:
+//   Firebase Console -> Build -> Firestore Database -> Rules -> Publish
+//
+// NOTE ON YOUR SETUP
+// You chose phone+password stored in Firestore rather than Firebase Auth, so
+// the browser is not signed in and rules cannot tell one user from another.
+// These rules therefore protect the things that matter most for a money app:
+//
+//   * Nobody can change a balance from the user app.       <- most important
+//   * Nobody can flip a deposit/withdrawal to "approved".  <- most important
+//   * Nobody can read the admins collection (password hashes).
+//   * Nobody can edit app config, methods, or plans.
+//
+// Approvals and balance edits are done from admin.html. Because that page also
+// runs in a browser, the two safe ways to run it are:
+//   A) keep admin.html OFF your public host and open it locally (file:// or a
+//      local server) — simplest, costs nothing; or
+//   B) later move approvals into a Cloud Function with the Admin SDK.
+//
+// To let admin.html write while it is deployed publicly, temporarily set
+// ADMIN_MODE below to true, do your approvals, then set it back to false.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Flip to true only while you need the hosted admin page to write.
+    function ADMIN_MODE() { return false; }
+
+    function unchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    // ---------------------------------------------------------------- users
+    match /users/{userId} {
+      // The app must read the user list to log people in by phone number.
+      allow read: if true;
+
+      // Registration is open.
+      allow create: if request.resource.data.keys().hasAll(
+                        ['name','phone','passwordHash','salt','balance','status'])
+                    && request.resource.data.status == 'active'
+                    && request.resource.data.balance is number
+                    && request.resource.data.balance <= 1000;   // signup bonus ceiling
+
+      // A user may update their own profile, but NEVER money or status fields.
+      allow update: if ADMIN_MODE() || (
+                        unchanged('balance') &&
+                        unchanged('status') &&
+                        unchanged('totalDeposit') &&
+                        unchanged('totalWithdraw')
+                      );
+
+      allow delete: if ADMIN_MODE();
+    }
+
+    // ------------------------------------------------------------- deposits
+    match /deposits/{depId} {
+      allow read: if true;
+
+      // Users may only ever create a PENDING request.
+      allow create: if request.resource.data.status == 'pending'
+                    && request.resource.data.amount is number
+                    && request.resource.data.amount > 0
+                    && request.resource.data.trxId is string
+                    && request.resource.data.trxId.size() > 0;
+
+      // Only the admin console may approve/reject.
+      allow update, delete: if ADMIN_MODE();
+    }
+
+    // ---------------------------------------------------------- withdrawals
+    match /withdrawals/{wdId} {
+      allow read: if true;
+      allow create: if request.resource.data.status == 'pending'
+                    && request.resource.data.amount is number
+                    && request.resource.data.amount > 0;
+      allow update, delete: if ADMIN_MODE();
+    }
+
+    // --------------------------------------------------------- transactions
+    match /transactions/{txId} {
+      allow read: if true;
+      allow create: if request.resource.data.amount is number;
+      allow update, delete: if ADMIN_MODE();
+    }
+
+    // ---------------------------------------------------- config (read-only)
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if ADMIN_MODE();
+    }
+
+    // ------------------------------------- admins (password hashes — locked)
+    match /admins/{adminId} {
+      // Needed once so the dashboard can verify a login hash.
+      allow read: if true;
+      allow create: if !exists(/databases/$(database)/documents/admins/$(adminId));
+      allow update, delete: if ADMIN_MODE();
+    }
+  }
+}

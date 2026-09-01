@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Task Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="firebase-config.js"></script>
+<script src="js/db.js"></script>
+<style>
+  :root{
+    --bg:#f1f5f9; --panel:#ffffff; --ink:#0f172a; --muted:#64748b;
+    --line:#e2e8f0; --blue:#2563eb; --blue-dark:#1d4ed8;
+    --green:#16a34a; --green-bg:#dcfce7;
+    --red:#dc2626;  --red-bg:#fee2e2;
+    --amber:#d97706; --amber-bg:#fef3c7;
+    --sidebar:#0f172a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:'Inter','Hind Siliguri',sans-serif;font-size:14px;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+
+  /* ---------------------------------------------------------- login gate */
+  .login-gate{
+    position:fixed;inset:0;z-index:1000;display:flex;align-items:center;
+    justify-content:center;background:linear-gradient(135deg,#0f172a,#1e3a8a);padding:20px;
+  }
+  .login-box{
+    background:#fff;border-radius:20px;padding:34px 30px;width:100%;max-width:390px;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);
+  }
+  .login-logo{font-size:40px;text-align:center;margin-bottom:8px;}
+  .login-title{font-size:21px;font-weight:800;text-align:center;margin-bottom:4px;}
+  .login-sub{font-size:12.5px;color:var(--muted);text-align:center;margin-bottom:22px;}
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;font-size:11.5px;font-weight:700;color:var(--muted);
+    margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;
+  }
+  .field input,.field select,.field textarea{
+    width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;
+    font-size:14px;outline:none;transition:.15s;background:#fff;color:var(--ink);
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{
+    border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1);
+  }
+  .btn{
+    padding:11px 18px;border:none;border-radius:10px;font-size:13.5px;
+    font-weight:700;background:var(--blue);color:#fff;transition:.15s;
+  }
+  .btn:hover{background:var(--blue-dark);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn.full{width:100%;padding:13px;}
+  .btn.green{background:var(--green);}
+  .btn.red{background:var(--red);}
+  .btn.grey{background:#e2e8f0;color:var(--ink);}
+  .btn.sm{padding:7px 12px;font-size:12px;border-radius:8px;}
+  .login-error{color:var(--red);font-size:12.5px;font-weight:600;min-height:18px;margin-bottom:6px;}
+  .login-hint{
+    font-size:11.5px;color:var(--muted);text-align:center;margin-top:16px;
+    line-height:1.6;padding-top:14px;border-top:1px solid var(--line);
+  }
+
+  /* ------------------------------------------------------------- layout */
+  .shell{display:flex;min-height:100vh;}
+  .sidebar{
+    width:236px;background:var(--sidebar);color:#cbd5e1;flex-shrink:0;
+    display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;overflow-y:auto;
+  }
+  .side-brand{
+    padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.09);
+  }
+  .side-brand .t{font-size:16px;font-weight:800;color:#fff;}
+  .side-brand .s{font-size:11px;color:#64748b;margin-top:2px;}
+  .side-nav{padding:10px 10px 20px;flex:1;}
+  .side-item{
+    display:flex;align-items:center;gap:10px;width:100%;padding:11px 13px;
+    background:none;border:none;color:#cbd5e1;font-size:13.5px;font-weight:600;
+    border-radius:9px;text-align:left;margin-bottom:2px;transition:.13s;
+  }
+  .side-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+  .side-item.active{background:var(--blue);color:#fff;}
+  .side-item .ic{font-size:16px;width:20px;text-align:center;}
+  .side-badge{
+    margin-left:auto;background:var(--red);color:#fff;font-size:10px;
+    font-weight:800;padding:2px 7px;border-radius:10px;min-width:19px;text-align:center;
+  }
+  .side-foot{padding:14px;border-top:1px solid rgba(255,255,255,.09);}
+  .mode-chip{
+    display:block;text-align:center;font-size:10.5px;font-weight:800;
+    padding:6px;border-radius:7px;margin-bottom:9px;letter-spacing:.4px;
+  }
+  .mode-chip.live{background:var(--green-bg);color:#166534;}
+  .mode-chip.demo{background:var(--amber-bg);color:#92400e;}
+
+  .main{margin-left:236px;flex:1;min-width:0;}
+  .topbar{
+    background:#fff;border-bottom:1px solid var(--line);padding:15px 26px;
+    display:flex;align-items:center;justify-content:space-between;
+    position:sticky;top:0;z-index:50;
+  }
+  .topbar h1{font-size:19px;margin:0;font-weight:800;}
+  .topbar .who{font-size:12.5px;color:var(--muted);}
+  .content{padding:24px 26px 60px;}
+
+  /* ---------------------------------------------------------- dashboard */
+  .stat-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));
+    gap:15px;margin-bottom:26px;
+  }
+  .stat-card{
+    background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px 19px;
+  }
+  .stat-card .lab{
+    font-size:11px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px;
+  }
+  .stat-card .val{font-size:26px;font-weight:800;letter-spacing:-.6px;}
+  .stat-card .sub{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  .stat-card.alert{border-color:#fcd34d;background:#fffbeb;}
+  .stat-card.alert .val{color:var(--amber);}
+  .stat-card.good .val{color:var(--green);}
+
+  /* ------------------------------------------------------------- panels */
+  .panel{
+    background:#fff;border:1px solid var(--line);border-radius:14px;
+    margin-bottom:22px;overflow:hidden;
+  }
+  .panel-head{
+    padding:15px 19px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  }
+  .panel-title{font-size:15px;font-weight:800;}
+  .panel-body{padding:19px;}
+  .panel-body.flush{padding:0;}
+
+  .filter-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+  .chip{
+    padding:6px 13px;border:1.5px solid var(--line);background:#fff;
+    border-radius:20px;font-size:12.5px;font-weight:600;color:var(--muted);
+  }
+  .chip.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .search-input{
+    padding:8px 13px;border:1.5px solid var(--line);border-radius:9px;
+    font-size:13px;outline:none;min-width:230px;
+  }
+  .search-input:focus{border-color:var(--blue);}
+
+  /* -------------------------------------------------------------- table */
+  .tbl-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;padding:11px 15px;background:#f8fafc;
+    font-size:10.5px;font-weight:800;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.6px;
+    border-bottom:1px solid var(--line);white-space:nowrap;
+  }
+  td{padding:12px 15px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#f8fafc;}
+  .empty{padding:44px 20px;text-align:center;color:var(--muted);font-size:13.5px;}
+  .empty .big{font-size:34px;display:block;margin-bottom:9px;opacity:.5;}
+
+  .badge{
+    display:inline-block;padding:3px 9px;border-radius:20px;
+    font-size:10.5px;font-weight:800;letter-spacing:.4px;
+  }
+  .badge.pending{background:var(--amber-bg);color:#92400e;}
+  .badge.approved{background:var(--green-bg);color:#166534;}
+  .badge.rejected{background:var(--red-bg);color:#991b1b;}
+  .badge.active{background:var(--green-bg);color:#166534;}
+  .badge.blocked{background:var(--red-bg);color:#991b1b;}
+
+  .mono{
+    font-family:'Inter',monospace;font-size:12px;background:#f1f5f9;
+    padding:3px 7px;border-radius:5px;word-break:break-all;
+  }
+  .amt{font-weight:800;font-size:14px;}
+  .amt.plus{color:var(--green);}
+  .amt.minus{color:var(--red);}
+  .cell-name{font-weight:700;}
+  .cell-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
+
+  /* -------------------------------------------------------------- modal */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:900;
+    display:none;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-bg.open{display:flex;}
+  .modal{
+    background:#fff;border-radius:16px;width:100%;max-width:470px;
+    max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3);
+  }
+  .modal-head{
+    padding:17px 21px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .modal-head .t{font-size:16px;font-weight:800;}
+  .modal-head .x{background:none;border:none;font-size:19px;color:var(--muted);}
+  .modal-body{padding:21px;}
+  .modal-foot{
+    padding:15px 21px;border-top:1px solid var(--line);
+    display:flex;gap:9px;justify-content:flex-end;
+  }
+  .kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;}
+  .kv:last-child{border-bottom:none;}
+  .kv .k{color:var(--muted);font-weight:600;}
+  .kv .v{font-weight:700;text-align:right;word-break:break-all;}
+
+  .note{
+    background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;
+    padding:11px 14px;font-size:12.5px;color:#1e40af;line-height:1.6;margin-bottom:16px;
+  }
+  .note.warn{background:#fffbeb;border-color:#fde68a;color:#92400e;}
+  .note.danger{background:var(--red-bg);border-color:#fca5a5;color:#991b1b;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+  .method-row{
+    border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:13px;background:#fcfcfd;
+  }
+  .method-row-head{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
+  .method-row-head .ic{font-size:22px;}
+  .method-row-head .nm{font-weight:800;font-size:15px;flex:1;}
+  .toggle{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);
+  }
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:12px 22px;border-radius:11px;
+    font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;
+    transition:.25s;z-index:1200;box-shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+  .toast.show{opacity:1;}
+  .hidden{display:none !important;}
+
+  @media(max-width:860px){
+    .sidebar{width:64px;}
+    .side-brand .t,.side-brand .s,.side-item span.lbl,.mode-chip{display:none;}
+    .side-item{justify-content:center;}
+    .main{margin-left:64px;}
+    .content{padding:16px 13px 50px;}
+    .grid2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================ LOGIN GATE ============================ -->
+<div class="login-gate" id="loginGate">
+  <div class="login-box">
+    <div class="login-logo">🛡️</div>
+    <div class="login-title">Admin Dashboard</div>
+    <div class="login-sub" id="loginModeSub">Task Wallet control panel</div>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="admUser" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="admPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="login-error" id="admError"></div>
+    <button class="btn full" id="admLoginBtn" onclick="adminLogin()">Sign In</button>
+    <div class="login-hint" id="admHint">
+      Credentials come from <b>ADMIN_BOOTSTRAP</b> in <b>firebase-config.js</b>.
+    </div>
+  </div>
+</div>
+
+<!-- ============================== SHELL =============================== -->
+<div class="shell hidden" id="shell">
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="t">🛡️ Admin Panel</div>
+      <div class="s" id="brandAppName">Task Wallet</div>
+    </div>
+    <nav class="side-nav" id="sideNav">
+      <button class="side-item active" data-tab="dashboard"   onclick="go('dashboard')"><span class="ic">📊</span><span class="lbl">Dashboard</span></button>
+      <button class="side-item" data-tab="deposits"    onclick="go('deposits')"><span class="ic">💰</span><span class="lbl">Deposits</span><span class="side-badge hidden" id="badgeDep">0</span></button>
+      <button class="side-item" data-tab="withdrawals" onclick="go('withdrawals')"><span class="ic">💸</span><span class="lbl">Withdrawals</span><span class="side-badge hidden" id="badgeWd">0</span></button>
+      <button class="side-item" data-tab="users"       onclick="go('users')"><span class="ic">👥</span><span class="lbl">Users</span></button>
+      <button class="side-item" data-tab="methods"     onclick="go('methods')"><span class="ic">🏦</span><span class="lbl">Deposit Methods</span></button>
+      <button class="side-item" data-tab="plans"       onclick="go('plans')"><span class="ic">📦</span><span class="lbl">Plans</span></button>
+      <button class="side-item" data-tab="content"     onclick="go('content')"><span class="ic">⚙️</span><span class="lbl">Content &amp; Settings</span></button>
+      <button class="side-item" data-tab="transactions" onclick="go('transactions')"><span class="ic">🧾</span><span class="lbl">Transactions</span></button>
+    </nav>
+    <div class="side-foot">
+      <span class="mode-chip demo" id="modeChip">DEMO MODE</span>
+      <button class="btn grey sm" style="width:100%;" onclick="adminLogout()">Log out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="who" id="whoAmI"></div>
+    </div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="t" id="modalTitle">Title</div>
+      <button class="x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>
