@@ -1,0 +1,2375 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#2563eb;
+    --blue-dark:#1d4ed8;
+    --blue-bg:#eaf2ff;
+    --red:#ef4444;
+    --red-bg:#fdeaea;
+    --ink:#0f172a;
+    --muted:#64748b;
+    --card:#ffffff;
+    --page-bg:#eef1f6;
+    --green:#22c55e;
+    --purple1:#4c1d95;
+    --purple2:#7c3aed;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Hind Siliguri','Inter',sans-serif;
+    background:var(--page-bg);
+    display:flex;
+    justify-content:center;
+    color:var(--ink);
+  }
+  .phone{
+    width:420px;
+    min-height:100vh;
+    background:var(--page-bg);
+    position:relative;
+    padding-bottom:78px;
+    overflow-x:hidden;
+  }
+  .greeting{
+    text-align:center;
+    padding:18px 0 10px;
+    font-size:15px;
+    color:#334155;
+  }
+  .container{padding:0 16px;}
+
+  /* header card */
+  .header-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:18px 18px 22px;
+    box-shadow:0 6px 20px rgba(15,23,42,0.05);
+  }
+  .header-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .avatar{
+    width:42px;height:42px;border-radius:50%;
+    background:#dbeafe;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid var(--blue);
+    font-size:20px;
+  }
+  .welcome-text{font-size:12px;color:var(--muted);}
+  .username{font-weight:700;font-size:16px;color:var(--ink);}
+  .bell{
+    width:38px;height:38px;border-radius:12px;
+    background:#f1f5f9;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    border:none;
+    font-size:16px;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .bell:hover{background:#e2e8f0;transform:scale(1.05);}
+  .balance-block{text-align:center;margin-top:18px;}
+  .balance-label{
+    font-size:11px;
+    letter-spacing:1px;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .balance-value{
+    font-size:36px;
+    font-weight:800;
+    color:var(--blue);
+    margin-top:4px;
+  }
+  .balance-value span.tk{font-size:26px;margin-right:4px;}
+
+  /* banner */
+  .banner{
+    margin-top:16px;
+    border-radius:var(--radius);
+    background:linear-gradient(135deg,var(--purple1),var(--purple2) 60%, #b91c1c);
+    color:#fde047;
+    padding:20px 18px;
+    text-align:center;
+    font-weight:700;
+    line-height:1.6;
+    position:relative;
+    overflow:hidden;
+    cursor:pointer;
+    box-shadow:0 8px 24px rgba(76,29,149,0.35);
+  }
+  .banner .tag{
+    display:inline-block;
+    background:#16a34a;
+    color:#fff;
+    font-size:12px;
+    padding:2px 10px;
+    border-radius:6px;
+    margin:0 4px;
+  }
+  .banner .tag.orange{background:#ea580c;}
+  .banner-title{font-size:18px;margin-bottom:8px;color:#fde047;}
+  .banner-sub{font-size:20px;}
+  .banner-big{font-size:24px;margin-top:4px;}
+
+  /* action buttons */
+  .actions{
+    display:flex;
+    gap:12px;
+    margin-top:16px;
+  }
+  .action-btn{
+    flex:1;
+    border-radius:14px;
+    padding:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-weight:700;
+    font-size:16px;
+    border:none;
+    cursor:pointer;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .action-btn:active{transform:scale(0.97);}
+  .action-btn.deposit{background:var(--blue-bg);color:var(--blue);}
+  .action-btn.withdraw{background:var(--red-bg);color:var(--red);}
+  .action-btn .icon-circle{
+    width:24px;height:24px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:currentColor;
+  }
+  .action-btn.deposit .icon-circle{background:var(--blue);color:#fff;}
+  .action-btn.withdraw .icon-circle svg{stroke:var(--red);}
+
+  /* services */
+  .section-title{
+    display:flex;align-items:center;gap:8px;
+    margin:22px 0 12px;
+    font-weight:700;
+    font-size:16px;
+  }
+  .section-title .bar{width:4px;height:16px;background:var(--blue);border-radius:2px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%{opacity:1;}50%{opacity:.3;}100%{opacity:1;}}
+
+  .services-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+  }
+  .service-card{
+    background:var(--card);
+    border-radius:14px;
+    padding:16px 6px 12px;
+    text-align:center;
+    cursor:pointer;
+    border:none;
+    box-shadow:0 4px 12px rgba(15,23,42,0.04);
+    transition:transform .12s ease, box-shadow .12s ease;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+  }
+  .service-card:hover{transform:translateY(-3px);box-shadow:0 8px 18px rgba(15,23,42,0.08);}
+  .service-card:active{transform:scale(0.95);}
+  .service-icon{
+    width:38px;height:38px;
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;
+  }
+  .service-card span.label{font-size:12px;font-weight:600;color:#334155;}
+
+  /* live transactions */
+  .tx-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+  .tx-item{
+    background:var(--card);
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:13px;
+    box-shadow:0 3px 10px rgba(15,23,42,0.04);
+  }
+  .tx-left{display:flex;flex-direction:column;}
+  .tx-name{font-weight:600;color:#334155;}
+  .tx-time{color:var(--muted);font-size:11px;}
+  .tx-amount{font-weight:700;}
+  .tx-amount.plus{color:var(--green);}
+  .tx-amount.minus{color:var(--red);}
+
+  /* bottom nav */
+  .bottom-nav{
+    position:fixed;
+    bottom:0;
+    width:420px;
+    background:#fff;
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    padding:10px 0 8px;
+    border-top:1px solid #e2e8f0;
+    box-shadow:0 -4px 16px rgba(15,23,42,0.06);
+  }
+  .nav-item{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-size:11px;color:#94a3b8;font-weight:600;cursor:pointer;
+    background:none;border:none;
+    position:relative;
+  }
+  .nav-item.active{color:var(--blue);}
+  .nav-item .nav-dot{
+    width:5px;height:5px;border-radius:50%;background:var(--blue);
+    position:absolute;bottom:-7px;
+  }
+  .fab{
+    position:absolute;
+    top:-24px;
+    left:50%;
+    transform:translateX(-50%);
+    width:56px;height:56px;
+    border-radius:50%;
+    background:var(--blue-dark);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 20px rgba(37,99,235,0.5);
+    cursor:pointer;
+    border:3px solid #fff;
+  }
+  .fab-wrap{position:relative;width:56px;}
+
+  /* modal / screen overlay */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,0.55);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    z-index:50;
+  }
+  .overlay.open{display:flex;}
+  .sheet{
+    width:420px;
+    max-width:100%;
+    background:#fff;
+    border-radius:20px 20px 0 0;
+    padding:20px;
+    max-height:82vh;
+    overflow-y:auto;
+    animation:slideUp .25s ease;
+  }
+  .sheet.deposit-sheet{
+    padding:0;
+    max-height:88vh;
+  }
+  @keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .sheet-header{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:16px;
+  }
+  .sheet-title{font-size:18px;font-weight:700;}
+  .close-btn{
+    width:32px;height:32px;border-radius:50%;
+    background:#f1f5f9;border:none;font-size:16px;cursor:pointer;
+  }
+  .field{margin-bottom:14px;}
+  .field label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bottom:6px;}
+  .field input, .field select{
+    width:100%;padding:12px 14px;border-radius:10px;border:1px solid #e2e8f0;
+    font-size:14px;font-family:inherit;background:#f8fafc;
+  }
+  .quick-amounts{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .quick-amounts button{
+    flex:1;min-width:70px;padding:10px;border-radius:10px;border:1px solid #e2e8f0;
+    background:#f8fafc;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .quick-amounts button.selected{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .primary-btn{
+    width:100%;padding:14px;border-radius:12px;border:none;
+    background:var(--blue-dark);color:#fff;font-weight:700;font-size:15px;cursor:pointer;
+    margin-top:6px;
+  }
+  .primary-btn.red{background:var(--red);}
+  .primary-btn:active{transform:scale(0.98);}
+  .package-card{
+    border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:10px;
+    display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+  }
+  .package-card:hover{border-color:var(--blue);}
+  .package-name{font-weight:700;}
+  .package-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .package-price{font-weight:800;color:var(--blue);}
+  .toast{
+    position:fixed;
+    bottom:100px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#0f172a;
+    color:#fff;
+    padding:10px 18px;
+    border-radius:30px;
+    font-size:13px;
+    z-index:100;
+    opacity:0;
+    transition:opacity .3s ease;
+    white-space:nowrap;
+  }
+  .toast.show{opacity:1;}
+  .status-badge{
+    text-align:center;
+    font-size:10px;
+    color:#94a3b8;
+    padding:6px 0 2px;
+  }
+
+  /* deposit page redesign */
+  .deposit-sheet{
+    padding:0;
+    background:#fff;
+    border-radius:20px 20px 0 0;
+    overflow:hidden;
+    max-height:88vh;
+  }
+  .deposit-header{
+    background:linear-gradient(160deg,#1e3a8a 0%,#0b1530 100%);
+    padding:20px 20px 44px;
+    position:relative;
+    color:#fff;
+  }
+  .deposit-header-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .deposit-header-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:700;
+    font-size:16px;
+  }
+  .secure-pill{
+    background:rgba(255,255,255,0.15);
+    border:1px solid rgba(255,255,255,0.3);
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    padding:5px 12px;
+    border-radius:20px;
+  }
+  .dep-close{
+    position:absolute;
+    top:16px;
+    right:16px;
+    width:30px;height:30px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.15);
+    border:none;
+    color:#fff;
+    cursor:pointer;
+    display:none;
+  }
+  .deposit-amount-block{
+    text-align:center;
+    margin-top:26px;
+  }
+  .deposit-amount-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:8px;
+    border-bottom:1px solid rgba(255,255,255,0.25);
+    padding-bottom:10px;
+    margin:0 40px;
+  }
+  .deposit-amount-row .tk-sym{font-size:20px;color:rgba(255,255,255,0.6);}
+  .deposit-amount-row input{
+    background:transparent;
+    border:none;
+    outline:none;
+    color:#fff;
+    font-size:42px;
+    font-weight:800;
+    text-align:center;
+    width:100%;
+    font-family:inherit;
+  }
+  .deposit-amount-row input::placeholder{color:rgba(255,255,255,0.35);}
+  .min-dep-note{
+    margin-top:12px;
+    font-size:12px;
+    color:#fde047;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+  .deposit-body{
+    background:#fff;
+    border-radius:20px 20px 0 0;
+    margin-top:-24px;
+    position:relative;
+    padding:22px 20px 20px;
+  }
+  .quick-chip-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+  }
+  .quick-chip{
+    flex:1;
+    min-width:64px;
+    padding:10px 0;
+    border-radius:30px;
+    border:1px solid #e2e8f0;
+    background:#f8fafc;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    text-align:center;
+    color:#334155;
+    transition:background .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .quick-chip:hover{border-color:#93c5fd;}
+  .quick-chip.selected{
+    background:#1e3a8a;
+    border-color:#1e3a8a;
+    color:#fff;
+  }
+  .method-label{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .method-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-bottom:20px;
+  }
+  .method-card{
+    background:#f8fafc;
+    border:2px solid transparent;
+    border-radius:14px;
+    padding:14px 6px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .method-card.selected{
+    border-color:#1e3a8a;
+    background:#eef2ff;
+  }
+  .bkash-logo{
+  background:#fff !important;
+  color:#e2136e;
+  display:flex; align-items:center; justify-content:center; gap:1px;
+  font-size:21px; font-weight:700; letter-spacing:-1px;
+}
+.bkash-logo span{font-weight:400;}
+.bkash-logo b{font-weight:700;}
+.bkash-logo i{font-style:normal; font-size:20px; margin-left:1px; transform:rotate(-8deg);}
+.nagad-logo{
+  background:#fff !important;
+  color:#f04418;
+  display:flex; align-items:center; justify-content:center; gap:3px;
+  font-size:18px; font-weight:700;
+}
+.nagad-logo span{font-size:27px; color:#f7941d; line-height:1;}
+.nagad-logo b{font-weight:800;}
+.method-logo{
+    width:38px;height:38px;
+    border-radius:9px;
+    margin:0 auto 8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    font-weight:800;
+    color:#fff;
+  }
+  .method-name{
+    font-size:11px;
+    font-weight:700;
+    color:#334155;
+    letter-spacing:0.5px;
+  }
+  .confirm-btn{
+    width:100%;
+    padding:16px;
+    border-radius:14px;
+    border:none;
+    background:#0b1530;
+    color:#fff;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  .confirm-btn:active{transform:scale(0.98);}
+  .dep-footer{
+    text-align:center;
+    margin-top:16px;
+  }
+  .dep-footer .brand{
+    font-size:13px;
+    font-weight:700;
+    color:#1e3a8a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+  .dep-footer .sub{
+    font-size:11px;
+    color:#94a3b8;
+    margin-top:2px;
+  }
+  .withdraw-header{
+    background:linear-gradient(160deg,#1e293b 0%,#0b1120 100%);
+  }
+  .current-balance-note{
+    text-align:center;
+    margin-top:12px;
+    font-size:12px;
+    color:rgba(255,255,255,0.75);
+  }
+
+  /* Payment instruction / TrxID box */
+  .payment-instruction{
+    display:none;
+    background:#fffaf0;
+    border:1px solid #fbbf24;
+    border-radius:14px;
+    padding:14px;
+    margin:2px 0 18px;
+    animation:slideUp .18s ease;
+  }
+  .payment-instruction.show{display:block;}
+  .payment-instruction-text{
+    color:#92400e;
+    font-size:13px;
+    line-height:1.65;
+    margin-bottom:10px;
+  }
+  .payment-number-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#fff;
+    border:1px dashed #2563eb;
+    border-radius:10px;
+    padding:9px 10px;
+    margin-bottom:10px;
+  }
+  .payment-number{
+    flex:1;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:.5px;
+    color:#1e293b;
+  }
+  .copy-payment-btn{
+    width:34px;height:34px;border:none;border-radius:8px;
+    background:#eff6ff;color:#2563eb;cursor:pointer;
+    font-size:18px;display:flex;align-items:center;justify-content:center;
+  }
+  .trxid-input{
+    width:100%;padding:13px 14px;border-radius:11px;
+    border:1px solid #dbe3ee;background:#f8fafc;
+    font-size:14px;font-family:inherit;outline:none;
+  }
+  .trxid-input:focus{border-color:#2563eb;background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+  .trxid-input.invalid{border-color:#ef4444;background:#fff7f7;}
+  .trxid-hint{font-size:10px;color:#a16207;margin-top:5px;}
+
+  .auto-pay-box{
+    background:#ecfdf5;
+    border:1px solid #a7f3d0;
+    border-radius:14px;
+    padding:14px 16px;
+    text-align:center;
+    margin-bottom:18px;
+  }
+  .auto-pay-title{
+    color:#059669;
+    font-weight:700;
+    font-size:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    margin-bottom:4px;
+  }
+  .auto-pay-sub{
+    color:#047857;
+    font-size:11px;
+    line-height:1.5;
+  }
+  .processing-sheet{
+    width:340px;
+    max-width:85%;
+    background:#fff;
+    border-radius:20px;
+    padding:36px 28px 30px;
+    text-align:center;
+    animation:slideUp .25s ease;
+  }
+  .spinner{
+    width:56px;height:56px;
+    border-radius:50%;
+    border:4px solid #e2e8f0;
+    border-top-color:#1e3a8a;
+    margin:0 auto 20px;
+    animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .processing-title{
+    font-weight:700;
+    font-size:16px;
+    margin-bottom:6px;
+    color:var(--ink);
+  }
+  .processing-sub{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.6;
+  }
+  .success-check{
+    width:56px;height:56px;
+    border-radius:50%;
+    background:#dcfce7;
+    color:#16a34a;
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;
+    margin:0 auto 18px;
+    animation:popIn .3s ease;
+  }
+  @keyframes popIn{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+  .account-number-box{
+    background:#fefce8;
+    border:1px solid #fde68a;
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:18px;
+    animation:slideUp .2s ease;
+  }
+  .account-number-label{
+    display:block;
+    font-size:13px;
+    color:#78716c;
+    margin-bottom:8px;
+  }
+  .account-number-input{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1px solid #1e3a8a;
+    outline:none;
+    font-size:15px;
+    font-family:inherit;
+    background:#fff;
+    letter-spacing:0.5px;
+  }
+  .account-number-input.invalid{border-color:var(--red);}
+  .account-number-hint{
+    font-size:11px;
+    color:#a16207;
+    margin-top:6px;
+  }
+  .account-number-hint.invalid{color:var(--red);}
+  .account-number-hint.valid{color:#16a34a;}
+
+  .summary-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    font-size:14px;
+  }
+  .summary-label{color:var(--muted);}
+  .summary-value{font-weight:600;color:var(--ink);}
+  .summary-row.total .summary-label,
+  .summary-row.total .summary-value{
+    font-weight:800;
+    font-size:16px;
+    color:#1e3a8a;
+  }
+  .summary-divider{
+    height:1px;
+    background:#e2e8f0;
+    margin:6px 0;
+  }
+
+  .packages-disclaimer{
+    background:#f0f9ff;
+    border:1px solid #bae6fd;
+    border-radius:12px;
+    padding:12px 14px;
+    font-size:12px;
+    color:#0369a1;
+    line-height:1.6;
+    margin-bottom:16px;
+  }
+  .plan-card{
+    border:1.5px solid #e2e8f0;
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:12px;
+    cursor:pointer;
+    transition:border-color .12s ease, box-shadow .12s ease;
+  }
+  .plan-card:hover{border-color:#93c5fd;box-shadow:0 6px 16px rgba(37,99,235,0.08);}
+  .plan-card.selected{border-color:#2563eb;background:#f5f9ff;}
+  .plan-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+  }
+  .plan-name{font-weight:800;font-size:16px;color:var(--ink);}
+  .plan-price{font-weight:800;font-size:18px;color:var(--blue);}
+  .plan-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .plan-stat{
+    background:#f8fafc;
+    border-radius:10px;
+    padding:8px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  .plan-stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px;}
+  .plan-stat-value{font-size:13px;font-weight:700;color:#334155;}
+  .packages-footnote{
+    font-size:11px;
+    color:#94a3b8;
+    line-height:1.6;
+    margin-top:6px;
+    padding:0 2px;
+  }
+
+  /* Task Center */
+  .task-sheet{
+    padding:0;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .task-header{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 20px;
+    border-bottom:1px solid #f1f5f9;
+  }
+  .task-header-title{
+    font-weight:800;
+    font-size:17px;
+    color:var(--ink);
+  }
+  .task-active-badge{
+    background:#dbeafe;
+    color:var(--blue);
+    font-size:11px;
+    font-weight:700;
+    padding:5px 12px;
+    border-radius:20px;
+  }
+  .task-active-badge.inactive{
+    background:#f1f5f9;
+    color:#94a3b8;
+  }
+  .task-progress-card{
+    margin:18px 20px 0;
+    background:#f8fafc;
+    border-radius:18px;
+    padding:24px 20px;
+    text-align:center;
+  }
+  .progress-ring-wrap{
+    position:relative;
+    width:140px;
+    height:140px;
+    margin:0 auto;
+  }
+  .progress-ring{width:140px;height:140px;}
+  #progressRingFg{transition:stroke-dashoffset .5s ease;}
+  .progress-ring-text{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  .progress-ring-num{font-size:34px;font-weight:800;color:var(--ink);}
+  .progress-ring-sub{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.5px;margin-top:2px;}
+  .progress-caption{
+    margin-top:14px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .start-task-wrap{
+    text-align:center;
+    margin:26px 0 20px;
+  }
+  .start-task-btn{
+    width:64px;height:64px;
+    border-radius:50%;
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    font-size:22px;
+    cursor:pointer;
+    box-shadow:0 10px 24px rgba(37,99,235,0.4);
+    transition:transform .12s ease;
+  }
+  .start-task-btn:active{transform:scale(0.94);}
+  .start-task-btn:disabled{
+    background:#cbd5e1;
+    box-shadow:none;
+    cursor:not-allowed;
+  }
+  .start-task-label{
+    margin-top:8px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1px;
+    color:var(--muted);
+  }
+  .task-stats-row{
+    display:flex;
+    gap:12px;
+    padding:0 20px;
+    margin-bottom:20px;
+  }
+  .task-stat-box{
+    flex:1;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    padding:12px 14px;
+  }
+  .task-stat-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+  .task-stat-value{font-size:16px;font-weight:800;color:var(--ink);}
+  .task-activity-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 20px;
+    font-weight:700;
+    font-size:14px;
+    color:var(--ink);
+    margin-bottom:10px;
+  }
+  .task-activity-empty{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    padding:0 20px 24px;
+  }
+  .task-activity-item{
+    margin:0 20px 10px;
+    background:#f8fafc;
+    border-radius:12px;
+    padding:10px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:13px;
+  }
+  .task-activity-item:last-child{margin-bottom:20px;}
+
+  /* Statement / History */
+  .statement-sheet{
+    padding:0;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .statement-header{
+    background:linear-gradient(135deg,#2563eb 0%,#1e3a8a 100%);
+    padding:20px 20px 40px;
+    color:#fff;
+  }
+  .statement-header-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .statement-title{font-weight:800;font-size:19px;}
+  .statement-back{
+    width:34px;height:34px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.2);
+    border:none;
+    color:#fff;
+    font-size:16px;
+    cursor:pointer;
+  }
+  .statement-nav-label{
+    text-align:center;
+    font-size:12px;
+    color:rgba(255,255,255,0.8);
+    margin-top:22px;
+  }
+  .statement-nav-value{
+    text-align:center;
+    font-size:32px;
+    font-weight:800;
+    margin-top:4px;
+  }
+  .statement-summary{
+    background:#fff;
+    margin:-24px 16px 0;
+    border-radius:16px;
+    box-shadow:0 8px 20px rgba(15,23,42,0.08);
+    display:flex;
+    align-items:center;
+    padding:16px 0;
+    position:relative;
+    z-index:1;
+  }
+  .statement-summary-col{flex:1;text-align:center;}
+  .statement-summary-label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:0.5px;margin-bottom:6px;}
+  .statement-summary-value{font-size:18px;font-weight:800;}
+  .statement-summary-value.credit{color:var(--green);}
+  .statement-summary-value.debit{color:var(--red);}
+  .statement-summary-divider{width:1px;align-self:stretch;background:#e2e8f0;}
+  .statement-date-label{
+    padding:20px 20px 8px;
+    font-size:12px;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .statement-item{
+    margin:0 16px 10px;
+    background:#fff;
+    border-radius:14px;
+    box-shadow:0 3px 10px rgba(15,23,42,0.05);
+    padding:14px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .statement-item-icon{
+    width:40px;height:40px;
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;
+    flex-shrink:0;
+  }
+  .statement-item-body{flex:1;}
+  .statement-item-name{font-weight:700;font-size:14px;color:var(--ink);}
+  .statement-item-time{font-size:11px;color:var(--muted);margin-top:2px;}
+  .statement-item-right{text-align:right;}
+  .statement-item-amount{font-weight:800;font-size:14px;}
+  .statement-item-amount.plus{color:var(--green);}
+  .statement-item-amount.minus{color:var(--red);}
+  .statement-status{
+    display:inline-block;
+    font-size:10px;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:8px;
+    margin-top:4px;
+  }
+  .statement-status.approved{background:#dcfce7;color:#16a34a;}
+  .statement-status.pending{background:#fef3c7;color:#b45309;}
+
+  .privacy-section{margin-bottom:18px;}
+  .privacy-section-title{
+    font-weight:700;
+    font-size:14px;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .privacy-text{
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.7;
+  }
+  .privacy-list{
+    margin:0;
+    padding-left:18px;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.9;
+  }
+  .privacy-note{
+    font-size:11px;
+    color:#94a3b8;
+    line-height:1.6;
+    border-top:1px solid #e2e8f0;
+    padding-top:14px;
+    margin-top:6px;
+  }
+
+  /* Auth screen */
+  .auth-screen{
+    position:fixed;
+    inset:0;
+    background:var(--page-bg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:200;
+    padding:20px;
+  }
+  .auth-card{
+    width:380px;
+    max-width:100%;
+    background:#fff;
+    border-radius:20px;
+    padding:32px 26px 24px;
+    box-shadow:0 12px 32px rgba(15,23,42,0.1);
+  }
+  .auth-logo{
+    width:56px;height:56px;
+    border-radius:16px;
+    background:var(--blue-bg);
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;
+    margin:0 auto 12px;
+  }
+  .auth-app-name{
+    text-align:center;
+    font-weight:800;
+    font-size:19px;
+    color:var(--ink);
+    margin-bottom:22px;
+  }
+  .auth-tabs{
+    display:flex;
+    background:#f1f5f9;
+    border-radius:12px;
+    padding:4px;
+    margin-bottom:20px;
+  }
+  .auth-tab{
+    flex:1;
+    padding:10px;
+    border:none;
+    background:transparent;
+    border-radius:9px;
+    font-weight:700;
+    font-size:14px;
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .auth-tab.active{
+    background:#fff;
+    color:var(--blue);
+    box-shadow:0 2px 6px rgba(15,23,42,0.08);
+  }
+  .auth-error{
+    color:var(--red);
+    font-size:12px;
+    margin:-6px 0 12px;
+    min-height:14px;
+  }
+  .auth-hint{
+    text-align:center;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:14px;
+  }
+  .auth-footnote{
+    text-align:center;
+    font-size:11px;
+    color:#94a3b8;
+    line-height:1.6;
+    margin-top:18px;
+    padding-top:14px;
+    border-top:1px solid #f1f5f9;
+  }
+
+  /* Admin panel */
+  .admin-sheet{max-height:88vh;overflow-y:auto;}
+  .admin-tabs{margin-bottom:18px;}
+  .admin-tabs .auth-tab{font-size:12px;padding:9px 4px;}
+  .admin-section-title{
+    font-weight:700;
+    font-size:13px;
+    color:var(--ink);
+    margin:16px 0 10px;
+  }
+  .admin-section-title:first-child{margin-top:0;}
+  .admin-note{
+    font-size:11px;
+    color:#94a3b8;
+    line-height:1.6;
+    background:#f8fafc;
+    border-radius:10px;
+    padding:10px 12px;
+  }
+  .admin-plan-card{
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:12px;
+  }
+  .admin-plan-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .admin-plan-header input{
+    font-weight:700;
+    font-size:14px;
+    border:none;
+    background:transparent;
+    width:60%;
+    padding:0;
+  }
+  .admin-plan-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .admin-plan-grid .field{margin-bottom:0;}
+  .admin-plan-grid label{font-size:10px;}
+  .admin-plan-grid input{padding:8px 10px;font-size:13px;}
+  .admin-plan-cap{
+    font-size:11px;
+    color:var(--blue);
+    font-weight:600;
+    margin-bottom:8px;
+  }
+  .admin-plan-actions{display:flex;gap:8px;}
+  .admin-plan-actions button{
+    flex:1;
+    padding:8px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    border:1px solid #e2e8f0;
+    background:#f8fafc;
+  }
+  .admin-plan-actions button.save-btn{background:#1e3a8a;color:#fff;border-color:#1e3a8a;}
+  .admin-plan-actions button.delete-btn{color:var(--red);border-color:#fecaca;}
+  .admin-add-plan-btn{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1.5px dashed #cbd5e1;
+    background:#f8fafc;
+    color:var(--blue);
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    margin-bottom:14px;
+  }
+  .admin-log-item{
+    display:flex;
+    justify-content:space-between;
+    background:#f8fafc;
+    border-radius:10px;
+    padding:9px 12px;
+    margin-bottom:6px;
+    font-size:12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Auth gate: Login / Register -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">ðŸ’¼</div>
+    <div class="auth-app-name" id="authAppNameEl">Task Wallet</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLoginBtn" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" id="tabRegisterBtn" onclick="switchAuthTab('register')">Register</button>
+    </div>
+
+    <div id="loginForm">
+      <div class="field">
+        <label>Phone Number</label>
+        <input type="tel" id="loginPhone" placeholder="01XXXXXXXXX" maxlength="11">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter password">
+      </div>
+      <div class="auth-error" id="loginError"></div>
+      <button class="primary-btn" onclick="doLogin()">Login</button>
+      <div class="auth-hint"></div>
+    </div>
+
+    <div id="registerForm" style="display:none;">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="regName" placeholder="à¦¯à§‡à¦®à¦¨: Rahim Ahmed" maxlength="40">
+      </div>
+      <div class="field">
+        <label>Phone Number</label>
+        <input type="tel" id="regPhone" placeholder="01XXXXXXXXX" maxlength="11">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input type="password" id="regConfirmPassword" placeholder="Re-enter password">
+      </div>
+      <div class="auth-error" id="registerError"></div>
+      <button class="primary-btn" onclick="doRegister()">Create Account</button>
+    </div>
+
+    <div class="auth-footnote">Static prototype â€” accounts exist only for this session and are not saved anywhere.</div>
+  </div>
+</div>
+
+<div class="phone">
+
+  <div class="container">
+    <!-- header -->
+    <div class="header-card">
+      <div class="header-top">
+        <div class="user-info" onclick="openSheet('registerSheet')" style="cursor:pointer;">
+          <div class="avatar">ðŸ§‘</div>
+          <div>
+            <div class="welcome-text">Welcome back,</div>
+            <div class="username" id="usernameDisplay">Guest User</div>
+          </div>
+        </div>
+        <button class="bell" onclick="showToast('à¦•à§‹à¦¨à§‹ à¦¨à¦¤à§à¦¨ à¦¨à§‹à¦Ÿà¦¿à¦«à¦¿à¦•à§‡à¦¶à¦¨ à¦¨à§‡à¦‡')">ðŸ””</button>
+      </div>
+      <div class="balance-block">
+        <div class="balance-label">CURRENT BALANCE</div>
+        <div class="balance-value" id="balanceDisplay"><span class="tk">à§³</span>100.00</div>
+      </div>
+    </div>
+
+    <!-- banner -->
+    <div class="banner" onclick="openSheet('depositSheet')">
+      <div class="banner-title" id="bannerTitleEl">à¦…à§à¦¯à¦¾à¦•à¦¾à¦‰à¦¨à§à¦Ÿ à¦–à§à¦²à¦²à§‡ à¦ªà¦¾à¦¬à§‡à¦¨</div>
+      <div class="banner-sub"><span class="tag">SPECIAL OFFER!</span> à§§à§¦à§¦ à¦Ÿà¦¾à¦•à¦¾ à¦¬à§‹à¦¨à¦¾à¦¸ <span class="tag orange">SPECIAL OFFER!</span></div>
+      <div class="banner-big" id="bannerSub1El">à§¨à§¦à§¦à§¦ à¦Ÿà¦¾à¦•à¦¾ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à¦•à¦°à¦²à§‡</div>
+      <div class="banner-big" id="bannerSub2El">à§«à§¦à§¦ à¦Ÿà¦¾à¦•à¦¾ à¦¬à§‹à¦¨à¦¾à¦¸</div>
+    </div>
+
+    <!-- actions -->
+    <div class="actions">
+      <button class="action-btn deposit" onclick="openSheet('depositSheet')">
+        <span class="icon-circle">+</span> Deposit
+      </button>
+      <button class="action-btn withdraw" onclick="openSheet('withdrawSheet')">
+        <span class="icon-circle">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>
+        </span> Withdraw
+      </button>
+    </div>
+
+    <!-- services -->
+    <div class="section-title"><span class="bar"></span> Services</div>
+    <div class="services-grid">
+      <button class="service-card" onclick="openSheet('workSheet'); renderTaskCenter();">
+        <div class="service-icon" style="background:#ede9fe;">ðŸ‘†</div>
+        <span class="label">Start Work</span>
+      </button>
+      <button class="service-card" onclick="openSheet('packagesSheet'); renderPackages();">
+        <div class="service-icon" style="background:#dbeafe;">ðŸ“¦</div>
+        <span class="label">Packages</span>
+      </button>
+      <button class="service-card" onclick="openSheet('referSheet')">
+        <div class="service-icon" style="background:#dbeafe;">ðŸ‘¥</div>
+        <span class="label">Refer</span>
+      </button>
+      <button class="service-card" onclick="openSheet('historySheet'); renderStatement();">
+        <div class="service-icon" style="background:#dbeafe;">ðŸ•</div>
+        <span class="label">History</span>
+      </button>
+      <button class="service-card" onclick="showToast('à¦…à§à¦¯à¦¾à¦ª à¦‡à¦¨à¦¸à§à¦Ÿà¦² à¦²à¦¿à¦‚à¦•')">
+        <div class="service-icon" style="background:#dcfce7;">â–¶ï¸</div>
+        <span class="label">App Install</span>
+      </button>
+      <button class="service-card" onclick="openSheet('supportSheet')">
+        <div class="service-icon" style="background:#dbeafe;">ðŸŽ§</div>
+        <span class="label">Support</span>
+      </button>
+      <button class="service-card" onclick="openSheet('privacySheet')">
+        <div class="service-icon" style="background:#dbeafe;">ðŸ›¡ï¸</div>
+        <span class="label">Privacy</span>
+      </button>
+      <button class="service-card" onclick="openSheet('logoutSheet')">
+        <div class="service-icon" style="background:#fee2e2;">â»</div>
+        <span class="label">Logout</span>
+      </button>
+    </div>
+
+    <!-- live transactions -->
+    <div class="section-title"><span class="bar"></span> Live Transactions <span class="dot"></span></div>
+    <div class="tx-list" id="txList"></div>
+    <div class="status-badge"></div>
+  </div>
+</div>
+
+<!-- bottom nav -->
+<div class="bottom-nav">
+  <button class="nav-item active" id="navHome" onclick="setActiveNav('navHome'); closeAllSheets();">
+    ðŸ  <span>HOME</span><span class="nav-dot"></span>
+  </button>
+  <button class="nav-item" id="navDeposit" onclick="setActiveNav('navDeposit'); openSheet('depositSheet');">
+    ðŸ’³ <span>DEPOSIT</span>
+  </button>
+  <div class="fab-wrap">
+    <div class="fab" onclick="showToast('à¦¦à§à¦°à§à¦¤ à¦…à§à¦¯à¦¾à¦•à¦¶à¦¨ à¦®à§‡à¦¨à§')">âš¡</div>
+  </div>
+  <button class="nav-item" id="navPackages" onclick="setActiveNav('navPackages'); openSheet('packagesSheet'); renderPackages();">
+    ðŸ“¦ <span>PACKAGES</span>
+  </button>
+  <button class="nav-item" id="navMenu" onclick="setActiveNav('navMenu'); openSheet('menuSheet');">
+    â˜° <span>MENU</span>
+  </button>
+</div>
+
+<!-- ===== SHEETS ===== -->
+
+<!-- Deposit sheet -->
+<div class="overlay" id="depositSheet">
+  <div class="sheet deposit-sheet">
+    <div class="deposit-header">
+      <button class="dep-close" onclick="closeSheet('depositSheet')">âœ•</button>
+      <div class="deposit-header-top">
+        <div class="deposit-header-title">ðŸ—‚ï¸ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ</div>
+        <div class="secure-pill">SECURE PAY</div>
+      </div>
+      <div class="deposit-amount-block">
+        <div class="deposit-amount-row">
+          <span class="tk-sym">à§³</span>
+          <input type="number" id="depositAmount" placeholder="0" oninput="clearChipSelection()">
+        </div>
+        <div class="min-dep-note" id="minDepNoteEl">âš ï¸ à¦¸à¦°à§à¦¬à¦¨à¦¿à¦®à§à¦¨ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à§«à§¦à§¦ à¦Ÿà¦¾à¦•à¦¾</div>
+      </div>
+    </div>
+
+    <div class="deposit-body">
+      <div class="quick-chip-row" id="depositQuick">
+        <button class="quick-chip" onclick="pickAmount(this,500)">+500</button>
+        <button class="quick-chip" onclick="pickAmount(this,1000)">+1000</button>
+        <button class="quick-chip" onclick="pickAmount(this,2000)">+2000</button>
+        <button class="quick-chip" onclick="pickAmount(this,5000)">+5000</button>
+        <button class="quick-chip" onclick="pickAmount(this,10000)">+10k</button>
+      </div>
+
+      <div class="method-label">à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦®à§‡à¦¥à¦¡ à¦¬à¦¾à¦›à§à¦¨</div>
+      <div class="method-grid" id="methodGrid">
+        <div class="method-card" onclick="pickMethod(this,'bKash')">
+          <div class="method-logo bkash-logo" aria-label="bKash logo"><span>b</span><b>K</b><i>âž¤</i></div>
+          <div class="method-name">BKASH</div>
+        </div>
+        <div class="method-card" onclick="pickMethod(this,'Nagad')">
+          <div class="method-logo nagad-logo" aria-label="Nagad logo"><span>â—”</span><b>à¦¨à¦—à¦¦</b></div>
+          <div class="method-name">NAGAD</div>
+        </div>
+      </div>
+
+      <div class="payment-instruction" id="paymentInstruction">
+        <div class="payment-instruction-text" id="paymentInstructionText">à¦ªà§à¦°à¦¿à¦¯à¦¼ à¦—à§à¦°à¦¾à¦¹à¦•, à¦¨à¦¿à¦šà§‡à¦° à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°à§‡ à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¿à¦¯à¦¼à§‡ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦•à¦°à§à¦¨à¥¤ à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¾à¦¨à§‹à¦° à¦ªà¦° à¦¨à¦¿à¦šà§‡à¦° à¦˜à¦°à§‡ TrxID à¦¦à¦¿à¦¨à¥¤</div>
+        <div class="payment-number-row">
+          <span class="payment-number" id="paymentNumber">01853367870</span>
+          <button class="copy-payment-btn" type="button" onclick="copyPaymentNumber()" aria-label="Copy payment number">â–£</button>
+        </div>
+        <input class="trxid-input" id="depositTrxId" type="text" maxlength="50" placeholder="à¦à¦–à¦¾à¦¨à§‡ TrxID à¦²à¦¿à¦–à§à¦¨..." oninput="clearTrxIdError()">
+        <div class="trxid-hint" id="trxidHint">à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¾à¦¨à§‹à¦° à¦ªà¦° à¦ªà§à¦°à¦¾à¦ªà§à¦¤ TrxID à¦à¦–à¦¾à¦¨à§‡ à¦²à¦¿à¦–à§à¦¨</div>
+      </div>
+
+      <button class="confirm-btn" onclick="doDeposit()">à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦•à¦°à§à¦¨ âž¤</button>
+
+      <div class="dep-footer">
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Withdraw sheet -->
+<div class="overlay" id="withdrawSheet">
+  <div class="sheet deposit-sheet">
+    <div class="deposit-header withdraw-header">
+      <button class="dep-close" onclick="closeSheet('withdrawSheet')">âœ•</button>
+      <div class="deposit-header-top">
+        <div class="deposit-header-title">ðŸ’³ à¦‰à¦‡à¦¥à¦¡à§à¦°</div>
+        <div class="secure-pill">PAYOUT</div>
+      </div>
+      <div class="deposit-amount-block">
+        <div class="deposit-amount-row">
+          <span class="tk-sym">à§³</span>
+          <input type="number" id="withdrawAmount" placeholder="0" oninput="clearWithdrawChipSelection()">
+        </div>
+        <div class="current-balance-note">à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ à¦¬à§à¦¯à¦¾à¦²à§‡à¦¨à§à¦¸: <span id="withdrawBalanceNote">à§³100.00</span></div>
+      </div>
+    </div>
+
+    <div class="deposit-body">
+      <div class="auto-pay-box">
+        <div class="auto-pay-title">âš¡ à¦…à¦Ÿà§‹ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¸à¦¿à¦¸à§à¦Ÿà§‡à¦®</div>
+        <div class="auto-pay-sub" id="autoPaySubEl">à¦®à¦¿à¦¨à¦¿à¦®à¦¾à¦® à¦‰à¦‡à¦¥à¦¡à§à¦° 500 à¦Ÿà¦¾à¦•à¦¾à¥¤ à¦‰à¦‡à¦¥à¦¡à§à¦° à¦¦à§‡à¦¯à¦¼à¦¾à¦° à¦¸à¦¾à¦¥à§‡ à¦¸à¦¾à¦¥à§‡ à¦…à¦Ÿà§‹à¦®à§à¦¯à¦¾à¦Ÿà¦¿à¦•à¦­à¦¾à¦¬à§‡ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦ªà§‡à¦¯à¦¼à§‡ à¦¯à¦¾à¦¬à§‡à¦¨à¥¤</div>
+      </div>
+
+      <div class="quick-chip-row" id="withdrawQuick">
+        <button class="quick-chip" onclick="pickWithdrawAmount(this,500)">500</button>
+        <button class="quick-chip" onclick="pickWithdrawAmount(this,1000)">1000</button>
+        <button class="quick-chip" onclick="pickWithdrawAmount(this,2000)">2000</button>
+        <button class="quick-chip" onclick="pickWithdrawAmount(this,5000)">5000</button>
+      </div>
+
+      <div class="method-label">à¦•à§‹à¦¥à¦¾à¦¯à¦¼ à¦Ÿà¦¾à¦•à¦¾ à¦¨à¦¿à¦¬à§‡à¦¨?</div>
+      <div class="method-grid" id="withdrawMethodGrid">
+        <div class="method-card" onclick="pickWithdrawMethod(this,'bKash')">
+          <div class="method-logo bkash-logo" aria-label="bKash logo"><span>b</span><b>K</b><i>âž¤</i></div>
+          <div class="method-name">BKASH</div>
+        </div>
+        <div class="method-card" onclick="pickWithdrawMethod(this,'Nagad')">
+          <div class="method-logo nagad-logo" aria-label="Nagad logo"><span>â—”</span><b>à¦¨à¦—à¦¦</b></div>
+          <div class="method-name">NAGAD</div>
+        </div>
+
+      </div>
+
+      <div class="account-number-box" id="accountNumberBox" style="display:none;">
+        <label class="account-number-label">à¦†à¦ªà¦¨à¦¾à¦° à¦à¦•à¦¾à¦‰à¦¨à§à¦Ÿ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°</label>
+        <input type="tel" id="accountNumberInput" class="account-number-input" placeholder="01XXXXXXXXX" maxlength="11" oninput="validateAccountNumber()">
+        <div class="account-number-hint" id="accountNumberHint">à¦¸à¦ à¦¿à¦• à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦ªà§à¦°à¦¦à¦¾à¦¨ à¦•à¦°à§à¦¨</div>
+      </div>
+
+      <button class="confirm-btn" onclick="doWithdraw()">à¦‰à¦‡à¦¥à¦¡à§à¦° à¦°à¦¿à¦•à§‹à¦¯à¦¼à§‡à¦¸à§à¦Ÿ âžœ</button>
+
+      <div class="dep-footer">
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Packages sheet -->
+<div class="overlay" id="packagesSheet">
+  <div class="sheet packages-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">Choose Your Task Plan</div>
+      <button class="close-btn" onclick="closeSheet('packagesSheet')">âœ•</button>
+    </div>
+    <div class="packages-disclaimer">
+      à¦ªà§à¦°à¦¤à¦¿à¦Ÿà¦¿ à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦¸à¦‚à¦–à§à¦¯à¦• à¦…à§à¦¯à¦¾à¦¡ à¦Ÿà¦¾à¦¸à§à¦• à¦†à¦¨à¦²à¦• à¦•à¦°à§‡à¥¤ à¦†à¦¯à¦¼ à¦¨à¦¿à¦°à§à¦­à¦° à¦•à¦°à§‡ à¦†à¦ªà¦¨à¦¿ à¦•à¦¤à¦—à§à¦²à§‹ à¦Ÿà¦¾à¦¸à§à¦• à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦•à¦°à§‡à¦¨ à¦¤à¦¾à¦° à¦‰à¦ªà¦° â€” à¦•à§‹à¦¨à§‹ à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦¬à¦¾ à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦°à¦¿à¦Ÿà¦¾à¦°à§à¦¨ à¦¨à§‡à¦‡à¥¤
+    </div>
+
+    <div id="packagesList"></div>
+
+    <div class="packages-footnote">
+      *à¦à¦Ÿà¦¿ à¦à¦•à¦Ÿà¦¿ à¦Šà¦°à§à¦§à§à¦¬à¦¸à§€à¦®à¦¾ à¦®à¦¾à¦¤à§à¦°, à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦†à¦¯à¦¼ à¦¨à¦¯à¦¼ â€” à¦ªà§à¦°à¦•à§ƒà¦¤ à¦†à¦¯à¦¼ à¦¨à¦¿à¦°à§à¦­à¦° à¦•à¦°à§‡ à¦†à¦ªà¦¨à¦¿ à¦•à¦¤à¦—à§à¦²à§‹ à¦Ÿà¦¾à¦¸à§à¦• à¦ªà§à¦°à¦•à§ƒà¦¤à¦ªà¦•à§à¦·à§‡ à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦•à¦°à§‡à¦¨ à¦¤à¦¾à¦° à¦‰à¦ªà¦°à¥¤ à¦Ÿà¦¾à¦¸à§à¦• à¦¨à¦¾ à¦•à¦°à¦²à§‡ à¦•à§‹à¦¨à§‹ à¦†à¦¯à¦¼ à¦¹à¦¬à§‡ à¦¨à¦¾à¥¤
+    </div>
+  </div>
+</div>
+
+<!-- Start work sheet -->
+<div class="overlay" id="workSheet">
+  <div class="sheet task-sheet">
+    <div class="task-header">
+      <div class="task-header-title">ðŸ’¼ Task Center</div>
+      <div class="task-active-badge" id="taskActiveBadge">âœ“ ACTIVE</div>
+      <button class="close-btn" onclick="closeSheet('workSheet')" style="position:absolute;top:14px;right:16px;">âœ•</button>
+    </div>
+
+    <div class="task-progress-card">
+      <div class="progress-ring-wrap">
+        <svg class="progress-ring" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#e2e8f0" stroke-width="10"/>
+          <circle id="progressRingFg" cx="60" cy="60" r="52" fill="none" stroke="#2563eb" stroke-width="10"
+            stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)"/>
+        </svg>
+        <div class="progress-ring-text">
+          <div class="progress-ring-num" id="taskDoneCount">0</div>
+          <div class="progress-ring-sub">OF <span id="taskTotalCount">0</span> DONE</div>
+        </div>
+      </div>
+      <div class="progress-caption">Daily Progress Overview</div>
+    </div>
+
+    <div class="start-task-wrap">
+      <button class="start-task-btn" id="startTaskBtn" onclick="startTask()">â–¶</button>
+      <div class="start-task-label">START TASK</div>
+    </div>
+
+    <div class="task-stats-row">
+      <div class="task-stat-box">
+        <div class="task-stat-label">â³ Remaining</div>
+        <div class="task-stat-value" id="taskRemainingLabel">0 Tasks</div>
+      </div>
+      <div class="task-stat-box">
+        <div class="task-stat-label">ðŸ’° Earned Today</div>
+        <div class="task-stat-value" id="taskEarnedLabel">à§³0.00</div>
+      </div>
+    </div>
+
+    <div class="task-activity-header">
+      <span>Recent Activity</span>
+      <span style="cursor:pointer;" onclick="resetTask()" title="Reset">â†º</span>
+    </div>
+    <div id="taskActivityList" class="task-activity-empty">No tasks completed today.</div>
+  </div>
+</div>
+
+<!-- Refer sheet -->
+<div class="overlay" id="referSheet">
+  <div class="sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">Refer a Friend</div>
+      <button class="close-btn" onclick="closeSheet('referSheet')">âœ•</button>
+    </div>
+    <div class="field">
+      <label>Your referral code</label>
+      <input type="text" value="DSHAY-8823" readonly>
+    </div>
+    <button class="primary-btn" onclick="showToast('à¦°à§‡à¦«à¦¾à¦°à§‡à¦² à¦•à§‹à¦¡ à¦•à¦ªà¦¿ à¦¹à¦¯à¦¼à§‡à¦›à§‡')">Copy Code</button>
+  </div>
+</div>
+
+<!-- Registration / profile name sheet -->
+<div class="overlay" id="registerSheet">
+  <div class="sheet">
+    <div class="sheet-header">
+      <div class="sheet-title" id="registerTitle">Edit Profile Name</div>
+      <button class="close-btn" onclick="closeSheet('registerSheet')">âœ•</button>
+    </div>
+    <div class="field">
+      <label>Full Name</label>
+      <input type="text" id="registerNameInput" placeholder="à¦¯à§‡à¦®à¦¨: Rahim Ahmed" maxlength="40">
+    </div>
+    <button class="primary-btn" onclick="saveRegisteredName()">Save & Continue</button>
+  </div>
+</div>
+
+<!-- History sheet -->
+<div class="overlay" id="historySheet">
+  <div class="sheet statement-sheet">
+    <div class="statement-header">
+      <div class="statement-header-top">
+        <div class="statement-title">Statement</div>
+        <button class="statement-back" onclick="closeSheet('historySheet')">â†</button>
+      </div>
+      <div class="statement-nav-label">Net Asset Value</div>
+      <div class="statement-nav-value"><span class="tk-sym" style="font-size:22px;">à§³</span><span id="statementBalance">100.00</span></div>
+    </div>
+    <div class="statement-summary">
+      <div class="statement-summary-col">
+        <div class="statement-summary-label">TOTAL CREDIT</div>
+        <div class="statement-summary-value credit" id="statementCredit">à§³0</div>
+      </div>
+      <div class="statement-summary-divider"></div>
+      <div class="statement-summary-col">
+        <div class="statement-summary-label">TOTAL DEBIT</div>
+        <div class="statement-summary-value debit" id="statementDebit">à§³0</div>
+      </div>
+    </div>
+    <div id="statementBody"></div>
+  </div>
+</div>
+
+<!-- Support sheet -->
+<div class="overlay" id="supportSheet">
+  <div class="sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">Support</div>
+      <button class="close-btn" onclick="closeSheet('supportSheet')">âœ•</button>
+    </div>
+    <div class="admin-note" style="margin-bottom:16px;" id="supportContactNote">ðŸ“ž <span id="supportPhoneEl">+880 1XXXXXXXXX</span> &nbsp;Â·&nbsp; âœ‰ï¸ <span id="supportEmailEl">support@example.com</span></div>
+    <div class="field">
+      <label>Message</label>
+      <input type="text" placeholder="Describe your issue...">
+    </div>
+    <button class="primary-btn" onclick="showToast('à¦®à§‡à¦¸à§‡à¦œ à¦ªà¦¾à¦ à¦¾à¦¨à§‹ à¦¹à¦¯à¦¼à§‡à¦›à§‡')">Send Message</button>
+  </div>
+</div>
+
+<!-- Privacy sheet -->
+<div class="overlay" id="privacySheet">
+  <div class="sheet privacy-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">Privacy &amp; Security</div>
+      <button class="close-btn" onclick="closeSheet('privacySheet')">âœ•</button>
+    </div>
+
+    <div class="privacy-section">
+      <div class="privacy-section-title">à¦¤à¦¥à§à¦¯ à¦¸à¦‚à¦—à§à¦°à¦¹</div>
+      <p class="privacy-text">à¦†à¦®à¦°à¦¾ à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦®, à¦«à§‹à¦¨ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦à¦¬à¦‚ à¦²à§‡à¦¨à¦¦à§‡à¦¨à§‡à¦° à¦¤à¦¥à§à¦¯ à¦¸à¦‚à¦—à§à¦°à¦¹ à¦•à¦°à¦¿ à¦¶à§à¦§à§à¦®à¦¾à¦¤à§à¦° à¦¸à§‡à¦¬à¦¾ à¦ªà§à¦°à¦¦à¦¾à¦¨à§‡à¦° à¦‰à¦¦à§à¦¦à§‡à¦¶à§à¦¯à§‡à¥¤ à¦à¦‡ à¦¸à¦¿à¦¸à§à¦Ÿà§‡à¦®à§‡ à¦¤à¦¥à§à¦¯ à¦†à¦ªà¦¨à¦¾à¦° à¦¬à¦°à§à¦¤à¦®à¦¾à¦¨ à¦¸à§‡à¦¶à¦¨à§‡ à¦¬à§à¦¯à¦¬à¦¹à§ƒà¦¤ à¦¹à¦¯à¦¼à¥¤</p>
+    </div>
+
+    <div class="privacy-section">
+      <div class="privacy-section-title">à¦¤à¦¥à§à¦¯à§‡à¦° à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°</div>
+      <p class="privacy-text">à¦¸à¦‚à¦—à§ƒà¦¹à§€à¦¤ à¦¤à¦¥à§à¦¯ à¦¶à§à¦§à§à¦®à¦¾à¦¤à§à¦° à¦…à§à¦¯à¦¾à¦•à¦¾à¦‰à¦¨à§à¦Ÿ à¦ªà¦°à¦¿à¦šà¦¾à¦²à¦¨à¦¾, à¦²à§‡à¦¨à¦¦à§‡à¦¨ à¦ªà§à¦°à¦•à§à¦°à¦¿à¦¯à¦¼à¦¾à¦•à¦°à¦£ à¦à¦¬à¦‚ à¦—à§à¦°à¦¾à¦¹à¦• à¦¸à¦¹à¦¾à¦¯à¦¼à¦¤à¦¾à¦° à¦œà¦¨à§à¦¯ à¦¬à§à¦¯à¦¬à¦¹à§ƒà¦¤ à¦¹à¦¬à§‡à¥¤ à¦¤à§ƒà¦¤à§€à¦¯à¦¼ à¦ªà¦•à§à¦·à§‡à¦° à¦•à¦¾à¦›à§‡ à¦¬à¦¿à¦•à§à¦°à¦¿ à¦¬à¦¾ à¦¶à§‡à¦¯à¦¼à¦¾à¦° à¦•à¦°à¦¾ à¦¹à¦¯à¦¼ à¦¨à¦¾à¥¤</p>
+    </div>
+
+    <div class="privacy-section">
+      <div class="privacy-section-title">à¦¨à¦¿à¦°à¦¾à¦ªà¦¤à§à¦¤à¦¾ à¦šà¦°à§à¦šà¦¾</div>
+      <ul class="privacy-list">
+        <li>à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦à¦¨à¦•à§à¦°à¦¿à¦ªà§à¦Ÿà§‡à¦¡ à¦†à¦•à¦¾à¦°à§‡ à¦¸à¦‚à¦°à¦•à§à¦·à¦£ à¦•à¦°à¦¾ à¦¹à¦¯à¦¼ (à¦•à¦–à¦¨à§‹ à¦ªà§à¦²à§‡à¦‡à¦¨ à¦Ÿà§‡à¦•à§à¦¸à¦Ÿà§‡ à¦¨à¦¯à¦¼)</li>
+        <li>à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦¸à¦®à¦¯à¦¼ à¦¨à¦¿à¦·à§à¦•à§à¦°à¦¿à¦¯à¦¼ à¦¥à¦¾à¦•à¦²à§‡ à¦¸à§‡à¦¶à¦¨ à¦¸à§à¦¬à¦¯à¦¼à¦‚à¦•à§à¦°à¦¿à¦¯à¦¼à¦­à¦¾à¦¬à§‡ à¦¶à§‡à¦· à¦¹à¦¯à¦¼à§‡ à¦¯à¦¾à¦¯à¦¼</li>
+        <li>à¦¸à¦•à¦² à¦¸à¦‚à¦¯à§‹à¦— HTTPS à¦à¦¨à¦•à§à¦°à¦¿à¦ªà¦¶à¦¨à§‡à¦° à¦®à¦¾à¦§à§à¦¯à¦®à§‡ à¦¸à§à¦°à¦•à§à¦·à¦¿à¦¤ à¦°à¦¾à¦–à¦¾à¦° à¦šà§‡à¦·à§à¦Ÿà¦¾ à¦•à¦°à¦¾ à¦¹à¦¯à¦¼</li>
+        <li>à¦¸à¦‚à¦¬à§‡à¦¦à¦¨à¦¶à§€à¦² à¦¤à¦¥à§à¦¯à§‡ à¦…à§à¦¯à¦¾à¦•à§à¦¸à§‡à¦¸ à¦¸à§€à¦®à¦¿à¦¤ à¦“ à¦²à¦— à¦•à¦°à¦¾ à¦¥à¦¾à¦•à§‡</li>
+      </ul>
+    </div>
+
+    <div class="privacy-section">
+      <div class="privacy-section-title">à¦†à¦ªà¦¨à¦¾à¦° à¦…à¦§à¦¿à¦•à¦¾à¦°</div>
+      <p class="privacy-text">à¦†à¦ªà¦¨à¦¿ à¦¯à§‡à¦•à§‹à¦¨à§‹ à¦¸à¦®à¦¯à¦¼ à¦†à¦ªà¦¨à¦¾à¦° à¦¤à¦¥à§à¦¯ à¦¦à§‡à¦–à¦¤à§‡, à¦¸à¦‚à¦¶à§‹à¦§à¦¨ à¦•à¦°à¦¤à§‡ à¦¬à¦¾ à¦®à§à¦›à§‡ à¦«à§‡à¦²à¦¾à¦° à¦…à¦¨à§à¦°à§‹à¦§ à¦•à¦°à¦¤à§‡ à¦ªà¦¾à¦°à§‡à¦¨à¥¤ à¦¸à¦¹à¦¾à¦¯à¦¼à¦¤à¦¾à¦° à¦œà¦¨à§à¦¯ Support à¦¬à¦¿à¦­à¦¾à¦—à§‡ à¦¯à§‹à¦—à¦¾à¦¯à§‹à¦— à¦•à¦°à§à¦¨à¥¤</p>
+    </div>
+
+    <div class="privacy-note">à¦à¦Ÿà¦¿ à¦à¦•à¦Ÿà¦¿ à¦ªà§à¦²à§‡à¦¸à¦¹à§‹à¦²à§à¦¡à¦¾à¦° à¦¨à§€à¦¤à¦¿à¦®à¦¾à¦²à¦¾à¥¤ à¦ªà§à¦°à¦•à§ƒà¦¤ à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à§‡à¦° à¦†à¦—à§‡ à¦à¦•à¦œà¦¨ à¦†à¦‡à¦¨à¦œà§€à¦¬à§€à¦° à¦®à¦¾à¦§à§à¦¯à¦®à§‡ à¦¯à¦¾à¦šà¦¾à¦‡ à¦•à¦°à¦¾ à¦ªà§à¦°à¦•à§ƒà¦¤ à¦¨à§€à¦¤à¦¿à¦®à¦¾à¦²à¦¾ à¦¦à¦¿à¦¯à¦¼à§‡ à¦ªà§à¦°à¦¤à¦¿à¦¸à§à¦¥à¦¾à¦ªà¦¨ à¦•à¦°à§à¦¨à¥¤</div>
+  </div>
+</div>
+
+<!-- Logout sheet -->
+<div class="overlay" id="logoutSheet">
+  <div class="sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">Log out?</div>
+      <button class="close-btn" onclick="closeSheet('logoutSheet')">âœ•</button>
+    </div>
+    <p style="font-size:14px;color:var(--muted);">Are you sure you want to log out?</p>
+    <button class="primary-btn red" onclick="showToast('à¦²à¦— à¦†à¦‰à¦Ÿ à¦¹à¦¯à¦¼à§‡à¦›à§‡'); closeSheet('logoutSheet')">Log Out</button>
+  </div>
+</div>
+
+<!-- Menu sheet -->
+<div class="overlay" id="menuSheet">
+  <div class="sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">Menu</div>
+      <button class="close-btn" onclick="closeSheet('menuSheet')">âœ•</button>
+    </div>
+    <div class="package-card" onclick="openSheet('privacySheet')"><div class="package-name">Privacy</div></div>
+    <div class="package-card" onclick="openSheet('supportSheet')"><div class="package-name">Support</div></div>
+    <div class="package-card" onclick="openSheet('logoutSheet')"><div class="package-name">Logout</div></div>
+  </div>
+</div>
+
+<!-- Admin Panel -->
+<div class="overlay" id="adminSheet">
+  <div class="sheet admin-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">âš™ï¸ Admin Panel</div>
+      <button class="close-btn" onclick="closeSheet('adminSheet')">âœ•</button>
+    </div>
+
+    <div class="auth-tabs admin-tabs">
+      <button class="auth-tab active" id="adminTabContentBtn" onclick="switchAdminTab('content')">Content</button>
+      <button class="auth-tab" id="adminTabPlansBtn" onclick="switchAdminTab('plans')">Plans</button>
+      <button class="auth-tab" id="adminTabSettingsBtn" onclick="switchAdminTab('settings')">Settings</button>
+      <button class="auth-tab" id="adminTabActivityBtn" onclick="switchAdminTab('activity')">Activity</button>
+    </div>
+
+    <!-- Content tab -->
+    <div id="adminContentPanel">
+      <div class="admin-section-title">Home Banner</div>
+      <div class="field"><label>Banner Title</label><input type="text" id="adminBannerTitle"></div>
+      <div class="field"><label>Banner Line 1</label><input type="text" id="adminBannerSub1"></div>
+      <div class="field"><label>Banner Line 2</label><input type="text" id="adminBannerSub2"></div>
+      <div class="admin-section-title">App Identity</div>
+      <div class="field"><label>App Name (shown on login screen)</label><input type="text" id="adminAppName"></div>
+      <button class="primary-btn" onclick="saveAdminContent()">Save Content</button>
+    </div>
+
+    <!-- Plans tab -->
+    <div id="adminPlansPanel" style="display:none;">
+      <div class="admin-section-title">Task Plans</div>
+      <div id="adminPlansList"></div>
+      <div class="admin-note">à¦ªà§à¦°à¦¤à¦¿à¦Ÿà¦¿ à¦ªà§à¦²à§à¦¯à¦¾à¦¨à§‡à¦° à¦¸à¦°à§à¦¬à§‹à¦šà§à¦š à¦¸à¦®à§à¦­à¦¾à¦¬à§à¦¯ à¦†à¦¯à¦¼ à¦¸à§à¦¬à¦¯à¦¼à¦‚à¦•à§à¦°à¦¿à¦¯à¦¼à¦­à¦¾à¦¬à§‡ à¦¹à¦¿à¦¸à¦¾à¦¬ à¦¹à¦¯à¦¼ (validity Ã— ads/day Ã— reward/ad) â€” à¦•à§‹à¦¨à§‹ à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦°à¦¿à¦Ÿà¦¾à¦°à§à¦¨ à¦¸à§‡à¦Ÿ à¦•à¦°à¦¾ à¦¯à¦¾à¦¬à§‡ à¦¨à¦¾à¥¤</div>
+    </div>
+
+    <!-- Settings tab -->
+    <div id="adminSettingsPanel" style="display:none;">
+      <div class="admin-section-title">Transaction Limits</div>
+      <div class="field"><label>Minimum Deposit (à§³)</label><input type="number" id="adminMinDeposit"></div>
+      <div class="field"><label>Minimum Withdraw (à§³)</label><input type="number" id="adminMinWithdraw"></div>
+      <div class="admin-section-title">Support Contact</div>
+      <div class="field"><label>Support Phone</label><input type="text" id="adminSupportPhone"></div>
+      <div class="field"><label>Support Email</label><input type="text" id="adminSupportEmail"></div>
+      <button class="primary-btn" onclick="saveAdminSettings()">Save Settings</button>
+    </div>
+
+    <!-- Activity tab (read-only) -->
+    <div id="adminActivityPanel" style="display:none;">
+      <div class="admin-section-title">Recent Transactions <span style="font-weight:400;color:var(--muted);font-size:11px;">(read-only, this session)</span></div>
+      <div id="adminTxList"></div>
+      <div class="admin-section-title">Task Activity Today <span style="font-weight:400;color:var(--muted);font-size:11px;">(read-only)</span></div>
+      <div id="adminTaskList"></div>
+    </div>
+
+    <div class="admin-note" style="margin-top:6px;">à¦à¦‡ à¦à¦¡à¦®à¦¿à¦¨ à¦ªà§à¦¯à¦¾à¦¨à§‡à¦² à¦¶à§à¦§à§à¦®à¦¾à¦¤à§à¦° à¦…à§à¦¯à¦¾à¦ªà§‡à¦° à¦•à¦¨à§à¦Ÿà§‡à¦¨à§à¦Ÿ à¦“ à¦¸à§‡à¦Ÿà¦¿à¦‚à¦¸ à¦¨à¦¿à¦¯à¦¼à¦¨à§à¦¤à§à¦°à¦£ à¦•à¦°à§‡ â€” à¦•à§‹à¦¨à§‹ à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à¦•à¦¾à¦°à§€à¦° à¦¬à§à¦¯à¦¾à¦²à§‡à¦¨à§à¦¸ à¦¸à¦®à§à¦ªà¦¾à¦¦à¦¨à¦¾ à¦¬à¦¾ à¦‰à¦‡à¦¥à¦¡à§à¦° à¦…à¦¨à§à¦®à§‹à¦¦à¦¨à§‡à¦° à¦•à§à¦·à¦®à¦¤à¦¾ à¦à¦–à¦¾à¦¨à§‡ à¦¨à§‡à¦‡à¥¤</div>
+  </div>
+</div>
+
+<!-- Payment processing overlay -->
+<div class="overlay" id="processingSheet">
+  <div class="processing-sheet" id="processingContent">
+    <div class="spinner"></div>
+    <div class="processing-title">à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦ªà§à¦°à¦¸à§‡à¦¸ à¦¹à¦šà§à¦›à§‡...</div>
+    <div class="processing-sub">à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦…à¦ªà§‡à¦•à§à¦·à¦¾ à¦•à¦°à§à¦¨, à¦à¦Ÿà¦¿ à¦•à¦¯à¦¼à§‡à¦• à¦¸à§‡à¦•à§‡à¦¨à§à¦¡ à¦¸à¦®à¦¯à¦¼ à¦¨à¦¿à¦¤à§‡ à¦ªà¦¾à¦°à§‡à¥¤</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let balance = 100.00;
+let registeredName = null;
+
+// ===== Admin-controlled app settings (content/config only â€” no balance or withdrawal control) =====
+let minDepositAmount = 500;
+let minWithdrawAmount = 500;
+let supportPhone = '+880 1XXXXXXXXX';
+let supportEmail = 'support@example.com';
+
+function fmtBalance(){
+  document.getElementById('balanceDisplay').innerHTML = '<span class="tk">à§³</span>' + balance.toFixed(2);
+  const note = document.getElementById('withdrawBalanceNote');
+  if(note) note.textContent = 'à§³' + balance.toFixed(2);
+}
+
+function openSheet(id){
+  closeAllSheets();
+  document.getElementById(id).classList.add('open');
+}
+function closeSheet(id){
+  document.getElementById(id).classList.remove('open');
+}
+function closeAllSheets(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open'));
+}
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click', e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+
+function setActiveNav(id){
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.classList.remove('active');
+    n.querySelector('.nav-dot')?.remove();
+  });
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  if(!el.querySelector('.nav-dot')){
+    const dot = document.createElement('span');
+    dot.className='nav-dot';
+    el.appendChild(dot);
+  }
+}
+
+let selectedMethod = null;
+let selectedWithdrawMethod = null;
+
+function pickAmount(btn, amt){
+  document.querySelectorAll('#depositQuick button').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('depositAmount').value = amt;
+}
+function clearChipSelection(){
+  document.querySelectorAll('#depositQuick button').forEach(b=>b.classList.remove('selected'));
+}
+const paymentAccounts = {
+  bKash: '01853367870',
+  Nagad: 'à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¸à§‡à¦Ÿ à¦•à¦°à§à¦¨',
+};
+
+function pickMethod(card, name){
+  document.querySelectorAll('#methodGrid .method-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedMethod = name;
+
+  const box = document.getElementById('paymentInstruction');
+  const number = document.getElementById('paymentNumber');
+  const text = document.getElementById('paymentInstructionText');
+  if(box && number && text){
+    const account = paymentAccounts[name] || 'à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¸à§‡à¦Ÿ à¦•à¦°à§à¦¨';
+    number.textContent = account;
+    text.textContent = 'à¦ªà§à¦°à¦¿à¦¯à¦¼ à¦—à§à¦°à¦¾à¦¹à¦•, à¦¨à¦¿à¦šà§‡à¦° ' + name + ' à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°à§‡ à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¿à¦¯à¦¼à§‡ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦•à¦°à§à¦¨à¥¤ à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¾à¦¨à§‹à¦° à¦ªà¦° à¦¨à¦¿à¦šà§‡à¦° à¦˜à¦°à§‡ TrxID à¦¦à¦¿à¦¨à¥¤';
+    box.classList.add('show');
+  }
+}
+
+function clearTrxIdError(){
+  const input = document.getElementById('depositTrxId');
+  const hint = document.getElementById('trxidHint');
+  if(input) input.classList.remove('invalid');
+  if(hint){ hint.textContent='à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¾à¦¨à§‹à¦° à¦ªà¦° à¦ªà§à¦°à¦¾à¦ªà§à¦¤ TrxID à¦à¦–à¦¾à¦¨à§‡ à¦²à¦¿à¦–à§à¦¨'; hint.style.color='#a16207'; }
+}
+
+function copyPaymentNumber(){
+  const number = document.getElementById('paymentNumber')?.textContent?.trim();
+  if(!number || number.includes('à¦¸à§‡à¦Ÿ à¦•à¦°à§à¦¨')){ showToast('à¦à¦‡ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦®à§‡à¦¥à¦¡à§‡à¦° à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¸à§‡à¦Ÿ à¦•à¦°à¦¾ à¦¨à§‡à¦‡'); return; }
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(number).then(()=>showToast('à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦•à¦ªà¦¿ à¦¹à¦¯à¦¼à§‡à¦›à§‡'));
+  }else{
+    showToast('à¦¨à¦¾à¦®à§à¦¬à¦¾à¦°: '+number);
+  }
+}
+
+function pickWithdrawAmount(btn, amt){
+  document.querySelectorAll('#withdrawQuick button').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('withdrawAmount').value = amt;
+}
+function clearWithdrawChipSelection(){
+  document.querySelectorAll('#withdrawQuick button').forEach(b=>b.classList.remove('selected'));
+}
+function pickWithdrawMethod(card, name){
+  document.querySelectorAll('#withdrawMethodGrid .method-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedWithdrawMethod = name;
+  document.getElementById('accountNumberBox').style.display = 'block';
+}
+
+function validateAccountNumber(){
+  const input = document.getElementById('accountNumberInput');
+  const hint = document.getElementById('accountNumberHint');
+  const val = input.value.trim();
+  const isValid = /^01[0-9]{9}$/.test(val);
+  if(val.length === 0){
+    input.classList.remove('invalid');
+    hint.textContent = 'à¦¸à¦ à¦¿à¦• à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦ªà§à¦°à¦¦à¦¾à¦¨ à¦•à¦°à§à¦¨';
+    hint.className = 'account-number-hint';
+  } else if(isValid){
+    input.classList.remove('invalid');
+    hint.textContent = 'âœ“ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¸à¦ à¦¿à¦• à¦†à¦›à§‡';
+    hint.className = 'account-number-hint valid';
+  } else {
+    input.classList.add('invalid');
+    hint.textContent = 'à¦¸à¦ à¦¿à¦• à§§à§§ à¦¡à¦¿à¦œà¦¿à¦Ÿà§‡à¦° à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¦à¦¿à¦¨ (01XXXXXXXXX)';
+    hint.className = 'account-number-hint invalid';
+  }
+  return isValid;
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+const transactions = [];
+
+function addTx(name, amount, type){
+  transactions.unshift({name, amount, type, time:'Just now'});
+  renderTx();
+}
+
+function renderTx(){
+  const list = document.getElementById('txList');
+  const seed = transactions.length ? transactions : [
+    {name:'Deposit - bKash', amount:2000, type:'plus', time:'2 min ago'},
+    {name:'Task Reward', amount:8, type:'plus', time:'10 min ago'},
+    {name:'Withdraw - Nagad', amount:300, type:'minus', time:'1 hr ago'},
+    {name:'Referral Bonus', amount:50, type:'plus', time:'3 hr ago'},
+  ];
+  list.innerHTML = seed.slice(0,4).map(tx=>`
+    <div class="tx-item">
+      <div class="tx-left">
+        <span class="tx-name">${tx.name}</span>
+        <span class="tx-time">${tx.time}</span>
+      </div>
+      <div class="tx-amount ${tx.type}">${tx.type==='plus'?'+':'-'}à§³${tx.amount}</div>
+    </div>
+  `).join('');
+  renderStatement();
+}
+
+function iconForTx(name){
+  if(name.includes('Deposit')) return {icon:'â†“', bg:'#fef3c7', color:'#b45309'};
+  if(name.includes('Withdraw')) return {icon:'â†‘', bg:'#fee2e2', color:'#dc2626'};
+  if(name.includes('Plan Purchased')) return {icon:'ðŸ“¦', bg:'#dbeafe', color:'#2563eb'};
+  return {icon:'ðŸ’°', bg:'#dcfce7', color:'#16a34a'};
+}
+
+function renderStatement(){
+  const body = document.getElementById('statementBody');
+  if(!body) return;
+  const seed = transactions.filter(t => t.name.includes('Deposit') || t.name.includes('Withdraw'));
+  const shown = seed.length ? seed : [
+    {name:'Deposit', amount:500, type:'plus', time:'09:36 PM', status:'pending'},
+    {name:'Withdraw', amount:100, type:'minus', time:'09:03 PM', status:'approved'},
+  ];
+  document.getElementById('statementBalance').textContent = balance.toFixed(2);
+  const credit = shown.filter(t=>t.type==='plus').reduce((s,t)=>s+t.amount,0);
+  const debit = shown.filter(t=>t.type==='minus').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('statementCredit').textContent = 'à§³' + credit;
+  document.getElementById('statementDebit').textContent = 'à§³' + debit;
+
+  const todayLabel = new Date().toLocaleDateString('en-US');
+  body.innerHTML = `<div class="statement-date-label">${todayLabel}</div>` + shown.map(tx=>{
+    const meta = iconForTx(tx.name);
+    const status = tx.status || (tx.type==='plus' ? 'approved' : 'approved');
+    return `
+      <div class="statement-item">
+        <div class="statement-item-icon" style="background:${meta.bg};color:${meta.color};">${meta.icon}</div>
+        <div class="statement-item-body">
+          <div class="statement-item-name">${tx.name}</div>
+          <div class="statement-item-time">ðŸ• ${tx.time}</div>
+        </div>
+        <div class="statement-item-right">
+          <div class="statement-item-amount ${tx.type}">${tx.type==='plus'?'+':'-'}à§³${tx.amount}</div>
+          <div class="statement-status ${status}">${status.toUpperCase()}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Simulated live feed entries, capped at à§³500.
+const liveFeedEvents = [
+  {name:'Task Reward', type:'plus'},
+  {name:'Ad Watch Bonus', type:'plus'},
+  {name:'Daily Login Bonus', type:'plus'},
+  {name:'Referral Bonus', type:'plus'},
+];
+function pushLiveFeedEntry(){
+  const evt = liveFeedEvents[Math.floor(Math.random()*liveFeedEvents.length)];
+  const amount = Math.floor(Math.random()*496) + 5; // à§³5 - à§³500
+  transactions.unshift({name:evt.name, amount, type:evt.type, time:'Just now'});
+  if(transactions.length > 20) transactions.pop();
+  renderTx();
+}
+setInterval(pushLiveFeedEntry, 9000);
+
+function showProcessing(title, sub, onDone){
+  document.getElementById('processingContent').innerHTML = `
+    <div class="spinner"></div>
+    <div class="processing-title">${title}</div>
+    <div class="processing-sub">${sub}</div>
+  `;
+  openSheet('processingSheet');
+  setTimeout(()=>{
+    document.getElementById('processingContent').innerHTML = `
+      <div class="success-check">âœ“</div>
+      <div class="processing-title">à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦¹à¦¯à¦¼à§‡à¦›à§‡!</div>
+      <div class="processing-sub">à¦†à¦ªà¦¨à¦¾à¦° à¦…à¦¨à§à¦°à§‹à¦§ à¦¸à¦«à¦²à¦­à¦¾à¦¬à§‡ à¦ªà§à¦°à¦¸à§‡à¦¸ à¦¹à¦¯à¦¼à§‡à¦›à§‡à¥¤</div>
+    `;
+    setTimeout(()=>{
+      closeSheet('processingSheet');
+      onDone();
+    }, 900);
+  }, 1400);
+}
+
+function doDeposit(){
+  const amt = parseFloat(document.getElementById('depositAmount').value);
+  const trxInput = document.getElementById('depositTrxId');
+  const trxId = trxInput ? trxInput.value.trim() : '';
+  if(!amt || amt<=0){ showToast('à¦à¦•à¦Ÿà¦¿ à¦¸à¦ à¦¿à¦• à¦ªà¦°à¦¿à¦®à¦¾à¦£ à¦²à¦¿à¦–à§à¦¨'); return; }
+  if(amt < minDepositAmount){ showToast('à¦¸à¦°à§à¦¬à¦¨à¦¿à¦®à§à¦¨ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à§³'+minDepositAmount+' à¦Ÿà¦¾à¦•à¦¾'); return; }
+  if(!selectedMethod){ showToast('à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦®à§‡à¦¥à¦¡ à¦¬à¦¾à¦›à§à¦¨'); return; }
+  if(!trxId){
+    if(trxInput) trxInput.classList.add('invalid');
+    const hint=document.getElementById('trxidHint');
+    if(hint){ hint.textContent='TrxID à¦¨à¦¾ à¦¦à¦¿à¦²à§‡ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à¦°à¦¿à¦•à§‹à¦¯à¦¼à§‡à¦¸à§à¦Ÿ à¦ªà¦¾à¦ à¦¾à¦¨à§‹ à¦¯à¦¾à¦¬à§‡ à¦¨à¦¾'; hint.style.color='var(--red)'; }
+    showToast('TrxID à¦²à¦¿à¦–à§à¦¨');
+    return;
+  }
+  const method = selectedMethod;
+  closeSheet('depositSheet');
+  showProcessing('à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦ªà§à¦°à¦¸à§‡à¦¸ à¦¹à¦šà§à¦›à§‡...', 'à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦…à¦ªà§‡à¦•à§à¦·à¦¾ à¦•à¦°à§à¦¨, à¦à¦Ÿà¦¿ à¦•à¦¯à¦¼à§‡à¦• à¦¸à§‡à¦•à§‡à¦¨à§à¦¡ à¦¸à¦®à¦¯à¦¼ à¦¨à¦¿à¦¤à§‡ à¦ªà¦¾à¦°à§‡à¥¤', ()=>{
+    balance += amt;
+    fmtBalance();
+    addTx('Deposit - '+method, amt, 'plus');
+    showToast('à§³'+amt+' à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à¦¸à¦«à¦² à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+    document.getElementById('depositAmount').value = '';
+    if(document.getElementById('depositTrxId')) document.getElementById('depositTrxId').value = '';
+    document.querySelectorAll('#depositQuick button').forEach(b=>b.classList.remove('selected'));
+    document.querySelectorAll('#methodGrid .method-card').forEach(c=>c.classList.remove('selected'));
+    document.getElementById('paymentInstruction')?.classList.remove('show');
+    selectedMethod = null;
+  });
+}
+
+function doWithdraw(){
+  const amt = parseFloat(document.getElementById('withdrawAmount').value);
+  if(!amt || amt<=0){ showToast('à¦à¦•à¦Ÿà¦¿ à¦¸à¦ à¦¿à¦• à¦ªà¦°à¦¿à¦®à¦¾à¦£ à¦²à¦¿à¦–à§à¦¨'); return; }
+  if(amt < minWithdrawAmount){ showToast('à¦®à¦¿à¦¨à¦¿à¦®à¦¾à¦® à¦‰à¦‡à¦¥à¦¡à§à¦° à§³'+minWithdrawAmount+' à¦Ÿà¦¾à¦•à¦¾'); return; }
+  if(amt > balance){ showToast('à¦…à¦ªà¦°à§à¦¯à¦¾à¦ªà§à¦¤ à¦¬à§à¦¯à¦¾à¦²à§‡à¦¨à§à¦¸'); return; }
+  if(!selectedWithdrawMethod){ showToast('à¦à¦•à¦Ÿà¦¿ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦®à§‡à¦¥à¦¡ à¦¬à¦¾à¦›à§à¦¨'); return; }
+  if(!validateAccountNumber()){ showToast('à¦¸à¦ à¦¿à¦• à¦à¦•à¦¾à¦‰à¦¨à§à¦Ÿ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¦à¦¿à¦¨'); return; }
+  const method = selectedWithdrawMethod;
+  const acctNum = document.getElementById('accountNumberInput').value.trim();
+  closeSheet('withdrawSheet');
+  showProcessing('à¦‰à¦‡à¦¥à¦¡à§à¦° à¦ªà§à¦°à¦¸à§‡à¦¸ à¦¹à¦šà§à¦›à§‡...', 'à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦…à¦ªà§‡à¦•à§à¦·à¦¾ à¦•à¦°à§à¦¨, à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦ªà¦¾à¦ à¦¾à¦¨à§‹ à¦¹à¦šà§à¦›à§‡à¥¤', ()=>{
+    balance -= amt;
+    fmtBalance();
+    addTx('Withdraw - '+method+' ('+acctNum+')', amt, 'minus');
+    showToast('à§³'+amt+' à¦‰à¦¤à§à¦¤à§‹à¦²à¦¨ à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+    document.getElementById('withdrawAmount').value = '';
+    document.getElementById('accountNumberInput').value = '';
+    document.getElementById('accountNumberBox').style.display = 'none';
+    validateAccountNumber();
+    document.querySelectorAll('#withdrawQuick button').forEach(b=>b.classList.remove('selected'));
+    document.querySelectorAll('#withdrawMethodGrid .method-card').forEach(c=>c.classList.remove('selected'));
+    selectedWithdrawMethod = null;
+  });
+}
+
+// ===== Dynamic Task Plans (editable via Admin Panel) =====
+let plansData = [
+  { name:'Basic', price:500, days:60, adsPerDay:3, rewardPerAd:100 },
+  { name:'Standard', price:1000, days:60, adsPerDay:6, rewardPerAd:100 },
+  { name:'Pro', price:2000, days:60, adsPerDay:12, rewardPerAd:100 },
+];
+
+function renderPackages(){
+  const list = document.getElementById('packagesList');
+  if(!list) return;
+  list.innerHTML = plansData.map((p, idx)=>{
+    const dailyIncome = p.adsPerDay * p.rewardPerAd;
+    const cap = p.days * dailyIncome;
+    return `
+    <div class="plan-card" onclick="selectPlan(${idx}, this)">
+      <div class="plan-top">
+        <div class="plan-name">${p.name}</div>
+        <div class="plan-price">à§³${p.price.toLocaleString()}</div>
+      </div>
+      <div class="plan-grid">
+        <div class="plan-stat"><span class="plan-stat-label">à¦®à§‡à¦¯à¦¼à¦¾à¦¦</span><span class="plan-stat-value">ðŸ“… ${p.days} Days</span></div>
+        <div class="plan-stat"><span class="plan-stat-label">à¦ªà§à¦°à¦¤à¦¿à¦¦à¦¿à¦¨ à¦Ÿà¦¾à¦¸à§à¦• à¦²à¦¿à¦®à¦¿à¦Ÿ</span><span class="plan-stat-value">ðŸ“‹ up to ${p.adsPerDay} ads</span></div>
+        <div class="plan-stat"><span class="plan-stat-label">à¦ªà§à¦°à¦¤à¦¿ à¦…à§à¦¯à¦¾à¦¡ à¦°à¦¿à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡</span><span class="plan-stat-value">ðŸª™ à§³${p.rewardPerAd} / ad</span></div>
+        <div class="plan-stat daily-income-stat"><span class="plan-stat-label">DAILY INCOME</span><span class="plan-stat-value">ðŸª™ à§³${dailyIncome.toLocaleString()}</span></div>
+        <div class="plan-stat"><span class="plan-stat-label">à¦¸à¦°à§à¦¬à§‹à¦šà§à¦š à¦¸à¦®à§à¦­à¦¾à¦¬à§à¦¯ à¦†à¦¯à¦¼*</span><span class="plan-stat-value">ðŸ“ˆ up to à§³${cap.toLocaleString()}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectPlan(idx, card){
+  const p = plansData[idx];
+  if(!p) return;
+  if(p.price > balance){
+    showToast('à¦…à¦ªà¦°à§à¦¯à¦¾à¦ªà§à¦¤ à¦¬à§à¦¯à¦¾à¦²à§‡à¦¨à§à¦¸ â€” à¦†à¦—à§‡ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à¦•à¦°à§à¦¨');
+    return;
+  }
+  document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));
+  if(card) card.classList.add('selected');
+  closeSheet('packagesSheet');
+  showProcessing('à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦à¦•à¦Ÿà¦¿à¦­à§‡à¦Ÿ à¦¹à¦šà§à¦›à§‡...', 'à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦…à¦ªà§‡à¦•à§à¦·à¦¾ à¦•à¦°à§à¦¨à¥¤', ()=>{
+    balance -= p.price;
+    fmtBalance();
+    addTx(p.name+' Plan Purchased', p.price, 'minus');
+    showToast(p.name+' à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦à¦•à¦Ÿà¦¿à¦­ à¦¹à¦¯à¦¼à§‡à¦›à§‡ â€” '+p.days+' à¦¦à¦¿à¦¨à§‡à¦° à¦œà¦¨à§à¦¯ à¦ªà§à¦°à¦¤à¦¿à¦¦à¦¿à¦¨ '+p.adsPerDay+'à¦Ÿà¦¿ à¦…à§à¦¯à¦¾à¦¡ à¦Ÿà¦¾à¦¸à§à¦• à¦†à¦¨à¦²à¦•');
+    activePlanName = p.name;
+    dailyTaskQuota = p.adsPerDay;
+    rewardPerTask = p.rewardPerAd;
+    dailyTasksDone = 0;
+    todayEarned = 0;
+    taskActivityLog = [];
+    renderTaskCenter();
+  });
+}
+
+// ===== Task Center =====
+let activePlanName = null;
+let dailyTaskQuota = 0;
+let rewardPerTask = 0;
+let dailyTasksDone = 0;
+let todayEarned = 0;
+let taskActivityLog = [];
+let taskInProgress = false;
+
+function renderTaskCenter(){
+  const total = dailyTaskQuota;
+  const done = dailyTasksDone;
+  document.getElementById('taskDoneCount').textContent = done;
+  document.getElementById('taskTotalCount').textContent = total;
+  document.getElementById('taskRemainingLabel').textContent = Math.max(total - done, 0) + ' Tasks';
+  document.getElementById('taskEarnedLabel').textContent = 'à§³' + todayEarned.toFixed(2);
+
+  const badge = document.getElementById('taskActiveBadge');
+  if(activePlanName){
+    badge.textContent = 'âœ“ ACTIVE';
+    badge.classList.remove('inactive');
+  } else {
+    badge.textContent = 'NO PLAN';
+    badge.classList.add('inactive');
+  }
+
+  const circumference = 326.7;
+  const pct = total > 0 ? Math.min(done/total, 1) : 0;
+  document.getElementById('progressRingFg').style.strokeDashoffset = circumference * (1 - pct);
+
+  const btn = document.getElementById('startTaskBtn');
+  btn.disabled = taskInProgress || total === 0 || done >= total;
+
+  const list = document.getElementById('taskActivityList');
+  if(taskActivityLog.length === 0){
+    list.className = 'task-activity-empty';
+    list.textContent = 'No tasks completed today.';
+  } else {
+    list.className = '';
+    list.innerHTML = taskActivityLog.map(item=>`
+      <div class="task-activity-item">
+        <span>Ad Task #${item.num}</span>
+        <span style="color:var(--green);font-weight:700;">+à§³${item.reward}</span>
+      </div>
+    `).join('');
+  }
+}
+
+function startTask(){
+  if(dailyTaskQuota === 0){
+    showToast('à¦•à§‹à¦¨à§‹ à¦à¦•à¦Ÿà¦¿à¦­ à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦¨à§‡à¦‡ â€” à¦†à¦—à§‡ à¦à¦•à¦Ÿà¦¿ à¦ªà§à¦¯à¦¾à¦•à§‡à¦œ à¦•à¦¿à¦¨à§à¦¨');
+    return;
+  }
+  if(dailyTasksDone >= dailyTaskQuota){
+    showToast('à¦†à¦œà¦•à§‡à¦° à¦¸à¦¬ à¦Ÿà¦¾à¦¸à§à¦• à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+    return;
+  }
+  taskInProgress = true;
+  renderTaskCenter();
+  showProcessing('à¦…à§à¦¯à¦¾à¦¡ à¦¦à§‡à¦–à¦¾à¦¨à§‹ à¦¹à¦šà§à¦›à§‡...', 'à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦…à¦ªà§‡à¦•à§à¦·à¦¾ à¦•à¦°à§à¦¨, à¦Ÿà¦¾à¦¸à§à¦• à¦¸à¦®à§à¦ªà¦¨à§à¦¨ à¦¹à¦šà§à¦›à§‡à¥¤', ()=>{
+    dailyTasksDone += 1;
+    todayEarned += rewardPerTask;
+    balance += rewardPerTask;
+    fmtBalance();
+    addTx('Task Reward', rewardPerTask, 'plus');
+    taskActivityLog.unshift({num:dailyTasksDone, reward:rewardPerTask});
+    taskInProgress = false;
+    renderTaskCenter();
+    showToast('+à§³'+rewardPerTask+' à¦Ÿà¦¾à¦¸à§à¦• à¦°à¦¿à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦¯à§‹à¦— à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+  });
+}
+
+function resetTask(){
+  dailyTasksDone = 0;
+  todayEarned = 0;
+  taskActivityLog = [];
+  renderTaskCenter();
+  showToast('à¦†à¦œà¦•à§‡à¦° à¦Ÿà¦¾à¦¸à§à¦• à¦°à¦¿à¦¸à§‡à¦Ÿ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+}
+
+renderTx();
+fmtBalance();
+renderTaskCenter();
+
+function saveRegisteredName(){
+  const input = document.getElementById('registerNameInput');
+  const val = input.value.trim();
+  if(!val){ showToast('à¦…à¦¨à§à¦—à§à¦°à¦¹ à¦•à¦°à§‡ à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦® à¦²à¦¿à¦–à§à¦¨'); return; }
+  registeredName = val;
+  document.getElementById('usernameDisplay').textContent = val;
+  closeSheet('registerSheet');
+  showToast('à¦¨à¦¾à¦® à¦†à¦ªà¦¡à§‡à¦Ÿ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+}
+
+// ===== Login / Register system (in-memory only, session-scoped) =====
+const registeredUsers = {
+  '01712345678': { name: 'User', password: '123456' }
+};
+let currentPhone = null;
+
+function switchAuthTab(tab){
+  const loginBtn = document.getElementById('tabLoginBtn');
+  const regBtn = document.getElementById('tabRegisterBtn');
+  const loginForm = document.getElementById('loginForm');
+  const regForm = document.getElementById('registerForm');
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('registerError').textContent = '';
+  if(tab === 'login'){
+    loginBtn.classList.add('active'); regBtn.classList.remove('active');
+    loginForm.style.display = 'block'; regForm.style.display = 'none';
+  } else {
+    regBtn.classList.add('active'); loginBtn.classList.remove('active');
+    regForm.style.display = 'block'; loginForm.style.display = 'none';
+  }
+}
+
+function doLogin(){
+  const phone = document.getElementById('loginPhone').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  if(!/^01[0-9]{9}$/.test(phone)){ errEl.textContent = 'à¦¸à¦ à¦¿à¦• à¦«à§‹à¦¨ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¦à¦¿à¦¨'; return; }
+  if(!pass){ errEl.textContent = 'à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦¦à¦¿à¦¨'; return; }
+  const user = registeredUsers[phone];
+  if(!user || user.password !== pass){
+    errEl.textContent = 'à¦«à§‹à¦¨ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦…à¦¥à¦¬à¦¾ à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦­à§à¦²';
+    return;
+  }
+  errEl.textContent = '';
+  completeAuth(user.name, phone);
+}
+
+function doRegister(){
+  const name = document.getElementById('regName').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const pass = document.getElementById('regPassword').value;
+  const confirm = document.getElementById('regConfirmPassword').value;
+  const errEl = document.getElementById('registerError');
+
+  if(!name){ errEl.textContent = 'à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦® à¦¦à¦¿à¦¨'; return; }
+  if(!/^01[0-9]{9}$/.test(phone)){ errEl.textContent = 'à¦¸à¦ à¦¿à¦• à§§à§§ à¦¡à¦¿à¦œà¦¿à¦Ÿà§‡à¦° à¦«à§‹à¦¨ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¦à¦¿à¦¨'; return; }
+  if(registeredUsers[phone]){ errEl.textContent = 'à¦à¦‡ à¦¨à¦¾à¦®à§à¦¬à¦¾à¦° à¦¦à¦¿à¦¯à¦¼à§‡ à¦‡à¦¤à¦¿à¦®à¦§à§à¦¯à§‡ à¦…à§à¦¯à¦¾à¦•à¦¾à¦‰à¦¨à§à¦Ÿ à¦†à¦›à§‡, Login à¦•à¦°à§à¦¨'; return; }
+  if(pass.length < 6){ errEl.textContent = 'à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦•à¦®à¦ªà¦•à§à¦·à§‡ à§¬ à¦•à§à¦¯à¦¾à¦°à§‡à¦•à§à¦Ÿà¦¾à¦° à¦¹à¦¤à§‡ à¦¹à¦¬à§‡'; return; }
+  if(pass !== confirm){ errEl.textContent = 'à¦ªà¦¾à¦¸à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡ à¦®à¦¿à¦²à¦›à§‡ à¦¨à¦¾'; return; }
+
+  errEl.textContent = '';
+  registeredUsers[phone] = { name, password: pass };
+  completeAuth(name, phone);
+}
+
+function completeAuth(name, phone){
+  currentPhone = phone;
+  registeredName = name;
+  document.getElementById('usernameDisplay').textContent = name;
+  const code = (name.split(' ')[0].toUpperCase().slice(0,5) || 'USER') + '-' + Math.floor(1000 + Math.random()*9000);
+  const referInput = document.querySelector('#referSheet input[type="text"]');
+  if(referInput) referInput.value = code;
+  document.getElementById('authScreen').style.display = 'none';
+  showToast('à¦¸à§à¦¬à¦¾à¦—à¦¤à¦®, ' + name + '!');
+}
+
+// ===== Admin Panel =====
+function switchAdminTab(tab){
+  const tabs = {content:'adminTabContentBtn', plans:'adminTabPlansBtn', settings:'adminTabSettingsBtn', activity:'adminTabActivityBtn'};
+  const panels = {content:'adminContentPanel', plans:'adminPlansPanel', settings:'adminSettingsPanel', activity:'adminActivityPanel'};
+  Object.keys(tabs).forEach(key=>{
+    document.getElementById(tabs[key]).classList.toggle('active', key===tab);
+    document.getElementById(panels[key]).style.display = (key===tab) ? 'block' : 'none';
+  });
+  if(tab === 'plans') renderAdminPlansList();
+  if(tab === 'activity') renderAdminActivity();
+}
+
+function renderAdminPanel(){
+  // Content tab fields
+  document.getElementById('adminBannerTitle').value = document.getElementById('bannerTitleEl').textContent;
+  document.getElementById('adminBannerSub1').value = document.getElementById('bannerSub1El').textContent;
+  document.getElementById('adminBannerSub2').value = document.getElementById('bannerSub2El').textContent;
+  document.getElementById('adminAppName').value = document.getElementById('authAppNameEl').textContent;
+  // Settings tab fields
+  document.getElementById('adminMinDeposit').value = minDepositAmount;
+  document.getElementById('adminMinWithdraw').value = minWithdrawAmount;
+  document.getElementById('adminSupportPhone').value = supportPhone;
+  document.getElementById('adminSupportEmail').value = supportEmail;
+  renderAdminPlansList();
+}
+
+function saveAdminContent(){
+  document.getElementById('bannerTitleEl').textContent = document.getElementById('adminBannerTitle').value;
+  document.getElementById('bannerSub1El').textContent = document.getElementById('adminBannerSub1').value;
+  document.getElementById('bannerSub2El').textContent = document.getElementById('adminBannerSub2').value;
+  document.getElementById('authAppNameEl').textContent = document.getElementById('adminAppName').value;
+  showToast('à¦•à¦¨à§à¦Ÿà§‡à¦¨à§à¦Ÿ à¦¸à§‡à¦­ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+}
+
+function saveAdminSettings(){
+  const md = parseFloat(document.getElementById('adminMinDeposit').value);
+  const mw = parseFloat(document.getElementById('adminMinWithdraw').value);
+  if(md > 0) minDepositAmount = md;
+  if(mw > 0) minWithdrawAmount = mw;
+  supportPhone = document.getElementById('adminSupportPhone').value;
+  supportEmail = document.getElementById('adminSupportEmail').value;
+
+  document.getElementById('minDepNoteEl').textContent = 'âš ï¸ à¦¸à¦°à§à¦¬à¦¨à¦¿à¦®à§à¦¨ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à§³' + minDepositAmount + ' à¦Ÿà¦¾à¦•à¦¾';
+  document.getElementById('autoPaySubEl').textContent = 'à¦®à¦¿à¦¨à¦¿à¦®à¦¾à¦® à¦‰à¦‡à¦¥à¦¡à§à¦° ' + minWithdrawAmount + ' à¦Ÿà¦¾à¦•à¦¾à¥¤ à¦‰à¦‡à¦¥à¦¡à§à¦° à¦¦à§‡à¦¯à¦¼à¦¾à¦° à¦¸à¦¾à¦¥à§‡ à¦¸à¦¾à¦¥à§‡ à¦…à¦Ÿà§‹à¦®à§à¦¯à¦¾à¦Ÿà¦¿à¦•à¦­à¦¾à¦¬à§‡ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦ªà§‡à¦¯à¦¼à§‡ à¦¯à¦¾à¦¬à§‡à¦¨à¥¤';
+  document.getElementById('supportPhoneEl').textContent = supportPhone;
+  document.getElementById('supportEmailEl').textContent = supportEmail;
+  showToast('à¦¸à§‡à¦Ÿà¦¿à¦‚à¦¸ à¦¸à§‡à¦­ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+}
+
+function renderAdminPlansList(){
+  const el = document.getElementById('adminPlansList');
+  if(!el) return;
+  el.innerHTML = plansData.map((p, idx)=>{
+    const cap = p.days * p.adsPerDay * p.rewardPerAd;
+    return `
+    <div class="admin-plan-card">
+      <div class="admin-plan-header">
+        <input type="text" id="ap_name_${idx}" value="${p.name}">
+        <span style="font-size:12px;color:var(--muted);">#${idx+1}</span>
+      </div>
+      <div class="admin-plan-grid">
+        <div class="field"><label>Price (à§³)</label><input type="number" id="ap_price_${idx}" value="${p.price}"></div>
+        <div class="field"><label>Validity (days)</label><input type="number" id="ap_days_${idx}" value="${p.days}"></div>
+        <div class="field"><label>Ads / day</label><input type="number" id="ap_ads_${idx}" value="${p.adsPerDay}"></div>
+        <div class="field"><label>Reward / ad (à§³)</label><input type="number" id="ap_reward_${idx}" value="${p.rewardPerAd}"></div>
+      </div>
+      <div class="admin-plan-cap">Max possible earning (auto-calculated): à§³${cap.toLocaleString()}</div>
+      <div class="admin-plan-actions">
+        <button class="save-btn" onclick="saveAdminPlan(${idx})">Save</button>
+        <button class="delete-btn" onclick="deleteAdminPlan(${idx})">Delete</button>
+      </div>
+    </div>`;
+  }).join('') + `<button class="admin-add-plan-btn" onclick="addAdminPlan()">+ Add New Plan</button>`;
+}
+
+function saveAdminPlan(idx){
+  const name = document.getElementById('ap_name_'+idx).value.trim() || 'Plan';
+  const price = parseFloat(document.getElementById('ap_price_'+idx).value) || 0;
+  const days = parseInt(document.getElementById('ap_days_'+idx).value) || 1;
+  const ads = parseInt(document.getElementById('ap_ads_'+idx).value) || 0;
+  const reward = parseFloat(document.getElementById('ap_reward_'+idx).value) || 0;
+  plansData[idx] = { name, price, days, adsPerDay: ads, rewardPerAd: reward };
+  renderAdminPlansList();
+  renderPackages();
+  showToast(name + ' à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦†à¦ªà¦¡à§‡à¦Ÿ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+}
+
+function deleteAdminPlan(idx){
+  plansData.splice(idx, 1);
+  renderAdminPlansList();
+  renderPackages();
+  showToast('à¦ªà§à¦²à§à¦¯à¦¾à¦¨ à¦®à§à¦›à§‡ à¦«à§‡à¦²à¦¾ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+}
+
+function addAdminPlan(){
+  plansData.push({ name:'New Plan', price:500, days:30, adsPerDay:2, rewardPerAd:100 });
+  renderAdminPlansList();
+  renderPackages();
+}
+
+function renderAdminActivity(){
+  const txEl = document.getElementById('adminTxList');
+  const taskEl = document.getElementById('adminTaskList');
+  if(txEl){
+    txEl.innerHTML = transactions.length ? transactions.slice(0,15).map(tx=>`
+      <div class="admin-log-item">
+        <span>${tx.name}</span>
+        <span style="color:${tx.type==='plus'?'#16a34a':'#dc2626'};font-weight:700;">${tx.type==='plus'?'+':'-'}à§³${tx.amount}</span>
+      </div>
+    `).join('') : `<div class="admin-note">No transactions yet this session.</div>`;
+  }
+  if(taskEl){
+    taskEl.innerHTML = taskActivityLog.length ? taskActivityLog.map(item=>`
+      <div class="admin-log-item">
+        <span>Ad Task #${item.num}</span>
+        <span style="color:#16a34a;font-weight:700;">+à§³${item.reward}</span>
+      </div>
+    `).join('') : `<div class="admin-note">No tasks completed today.</div>`;
+  }
+}
+
+renderPackages();
+</script>
+
+</body>
+</html>
