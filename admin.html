@@ -1,0 +1,2122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - Task Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #eff6ff;
+    --success: #16a34a;
+    --success-light: #dcfce7;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --dark: #0f172a;
+    --slate: #334155;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --sidebar-w: 260px;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', 'Hind Siliguri', sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ADMIN LOGIN SCREEN */
+  .admin-login-screen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at top center, #1e293b, #0f172a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    padding: 20px;
+  }
+  .admin-login-card {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    padding: 32px 28px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35);
+    animation: popIn 0.3s ease;
+  }
+  .login-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 16px;
+    box-shadow: 0 10px 20px rgba(37,99,235,0.3);
+  }
+  .login-title { font-size: 20px; font-weight: 800; text-align: center; color: var(--dark); margin-bottom: 4px; }
+  .login-sub { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 24px; }
+  .login-error {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .login-credentials-note {
+    background: #f1f5f9;
+    border-left: 3px solid var(--primary);
+    padding: 10px 12px;
+    border-radius: 0 8px 8px 0;
+    font-size: 11.5px;
+    color: var(--slate);
+    margin-top: 18px;
+    line-height: 1.5;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: #0f172a;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    box-shadow: 4px 0 16px rgba(0,0,0,0.06);
+    transition: transform 0.3s ease;
+  }
+  .sidebar-header {
+    padding: 24px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .sidebar-title { font-size: 16px; font-weight: 700; color: #fff; }
+  .sidebar-sub { font-size: 11px; color: #94a3b8; }
+  
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    background: transparent;
+    color: #94a3b8;
+    border: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    position: relative;
+  }
+  .nav-btn:hover {
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+  }
+  .nav-btn.active {
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+  }
+  .nav-btn .badge {
+    margin-left: auto;
+    background: var(--danger);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .user-app-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 600;
+    transition: background 0.2s ease;
+  }
+  .user-app-link:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+  /* Main Content Area */
+  .main-wrapper {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .top-header {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 90;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-page-title { font-size: 18px; font-weight: 700; color: var(--dark); }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+
+  .firebase-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .firebase-status-badge.connected {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  .firebase-status-badge.simulation {
+    background: #fef3c7;
+    color: #b45309;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .connected .status-dot { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+  .simulation .status-dot { background: #f59e0b; }
+
+  .admin-user-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--slate);
+  }
+  .btn-logout {
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .content-body {
+    padding: 24px 28px 60px;
+    flex: 1;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 18px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  }
+  .stat-info { display: flex; flex-direction: column; gap: 4px; }
+  .stat-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 22px; font-weight: 800; color: var(--dark); }
+  .stat-sub { font-size: 11.5px; color: var(--muted); }
+  .stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  /* Panels */
+  .panel-section { display: none; }
+  .panel-section.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Data Table & Card Controls */
+  .table-card {
+    background: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    overflow: hidden;
+  }
+  .table-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-title { font-size: 15px; font-weight: 700; color: var(--dark); }
+  .filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .search-input {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    min-width: 220px;
+  }
+  .search-input:focus { border-color: var(--primary); }
+  .filter-pill {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .filter-pill.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* Tables */
+  .table-responsive { width: 100%; overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13px;
+  }
+  thead th {
+    background: #f8fafc;
+    padding: 12px 18px;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #fbfcfe; }
+
+  /* Badges & Status */
+  .status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .status-tag.pending { background: var(--warning-light); color: var(--warning); }
+  .status-tag.approved { background: var(--success-light); color: var(--success); }
+  .status-tag.rejected { background: var(--danger-light); color: var(--danger); }
+  .status-tag.active { background: var(--success-light); color: var(--success); }
+  .status-tag.banned { background: var(--danger-light); color: var(--danger); }
+
+  .gateway-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .gateway-tag.bkash { background: #fdf2f8; color: #db2777; }
+  .gateway-tag.nagad { background: #fff7ed; color: #ea580c; }
+  .gateway-tag.rocket { background: #faf5ff; color: #8b5cf6; }
+  .gateway-tag.usdt { background: #ecfdf5; color: #059669; }
+
+  /* Action Buttons */
+  .btn-group { display: flex; align-items: center; gap: 6px; }
+  .action-btn-sm {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    transition: opacity 0.15s ease;
+  }
+  .action-btn-sm:hover { opacity: 0.85; }
+  .btn-approve { background: var(--success); color: #fff; }
+  .btn-reject { background: var(--danger); color: #fff; }
+  .btn-edit { background: #e0f2fe; color: #0284c7; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--slate); }
+
+  /* Modals */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    overflow: hidden;
+    animation: popIn 0.2s ease;
+  }
+  @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--dark); }
+  .modal-close { background: none; border: none; font-size: 18px; color: var(--muted); cursor: pointer; }
+  .modal-body { padding: 22px; max-height: 75vh; overflow-y: auto; }
+  .modal-footer {
+    padding: 14px 22px;
+    border-top: 1px solid var(--border);
+    background: #f8fafc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* Form Elements */
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--slate); margin-bottom: 6px; }
+  .form-control {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 13.5px;
+    font-family: inherit;
+    outline: none;
+  }
+  .form-control:focus { border-color: var(--primary); }
+  .form-hint { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+  
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-secondary {
+    background: #e2e8f0;
+    color: var(--slate);
+    border: none;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    z-index: 600;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.show { display: flex; animation: slideUp 0.2s ease; }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* Firebase Wizard Card */
+  .wizard-card {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .wizard-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .wizard-desc { font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 16px; }
+
+  /* Gateway Cards */
+  .gateways-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .gateway-item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main-wrapper { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========================================================================= -->
+<!-- ADMIN LOGIN SCREEN (AUTH WITH USERNAME & PASSWORD STORED IN FIREBASE) -->
+<!-- ========================================================================= -->
+<div class="admin-login-screen" id="adminLoginScreen">
+  <div class="admin-login-card">
+    <div class="login-logo">🛡️</div>
+    <div class="login-title">Admin Portal Login</div>
+    <div class="login-sub">Task Wallet Control Center</div>
+
+    <div class="login-error" id="adminLoginError"></div>
+
+    <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Admin Username</label>
+        <input type="text" class="form-control" id="inputAdminUser" placeholder="Enter admin username" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Admin Password</label>
+        <input type="password" class="form-control" id="inputAdminPass" placeholder="Enter admin password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%; padding:11px; margin-top:8px; font-size:14px;" id="btnAdminLogin">
+        Sign In to Dashboard ➔
+      </button>
+    </form>
+
+    <div class="login-credentials-note">
+      🔑 <strong>Default Admin Credentials:</strong><br>
+      • Username: <code style="font-weight:700;">admin</code><br>
+      • Password: <code style="font-weight:700;">admin123456</code><br>
+      <span style="font-size:11px; color:var(--muted);">(You can change your username & password inside the Admin Security tab)</span>
+    </div>
+
+    <div style="text-align:center; margin-top:16px;">
+      <a href="index.html" target="_blank" style="font-size:12px; color:var(--muted); text-decoration:none;">
+        📱 Open User Web App ↗
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- ADMIN DASHBOARD (VISIBLE AFTER LOGIN) -->
+<!-- ========================================================================= -->
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">⚡</div>
+    <div>
+      <div class="sidebar-title">Task Wallet Admin</div>
+      <div class="sidebar-sub">Control Center</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-btn active" onclick="switchTab('dashboard')">
+      📊 <span>Dashboard Overview</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('deposits')">
+      📥 <span>Deposit Requests</span>
+      <span class="badge" id="pendingDepBadge" style="display:none;">0</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('withdrawals')">
+      📤 <span>Withdrawal Requests</span>
+      <span class="badge" id="pendingWdBadge" style="display:none;">0</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('users')">
+      👥 <span>Registered Users</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('gateways')">
+      💳 <span>Deposit Gateways</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('plans')">
+      📦 <span>Task Packages / Plans</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('settings')">
+      ⚙️ <span>App Settings</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('security')">
+      🔐 <span>Admin Security</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('firebase')">
+      🔥 <span>Firebase Connection</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="index.html" target="_blank" class="user-app-link">
+      📱 Open User Web App ↗
+    </a>
+  </div>
+</aside>
+
+<!-- Main Wrapper -->
+<div class="main-wrapper">
+  <!-- Top Header -->
+  <header class="top-header">
+    <div class="header-left">
+      <h1 class="header-page-title" id="pageTitle">Dashboard Overview</h1>
+    </div>
+    <div class="header-right">
+      <div class="firebase-status-badge simulation" id="firebaseStatusBadge">
+        <span class="status-dot"></span>
+        <span id="firebaseStatusText">Simulation Mode (Local DB)</span>
+      </div>
+      <div class="admin-user-pill">
+        <span>👤</span>
+        <span id="headerAdminName">admin</span>
+      </div>
+      <button class="btn-logout" onclick="handleAdminLogout()">Logout ✕</button>
+    </div>
+  </header>
+
+  <div class="content-body">
+    
+    <!-- KPI Stats Row (Visible on Dashboard) -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-label">Pending Deposits</span>
+          <span class="stat-value" id="statPendingDepositsCount">0</span>
+          <span class="stat-sub" id="statPendingDepositsAmount">৳ 0</span>
+        </div>
+        <div class="stat-icon" style="background:var(--warning-light); color:var(--warning);">📥</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-label">Total Users</span>
+          <span class="stat-value" id="statTotalUsers">0</span>
+          <span class="stat-sub">Active members</span>
+        </div>
+        <div class="stat-icon" style="background:#eff6ff; color:var(--primary);">👥</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-label">Total Approved Deposits</span>
+          <span class="stat-value" id="statTotalApprovedDeposits">৳ 0</span>
+          <span class="stat-sub" id="statApprovedDepCount">0 transactions</span>
+        </div>
+        <div class="stat-icon" style="background:var(--success-light); color:var(--success);">💰</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-label">Pending Withdrawals</span>
+          <span class="stat-value" id="statPendingWithdrawalsCount">0</span>
+          <span class="stat-sub" id="statPendingWithdrawalsAmount">৳ 0</span>
+        </div>
+        <div class="stat-icon" style="background:var(--danger-light); color:var(--danger);">📤</div>
+      </div>
+    </div>
+
+    <!-- 1. DASHBOARD TAB -->
+    <section class="panel-section active" id="tab-dashboard">
+      <div class="table-card" style="margin-bottom:24px;">
+        <div class="table-header">
+          <div class="table-title">⚡ Recent Pending Deposit Requests (Needs Approval)</div>
+          <button class="btn-primary" style="font-size:12px; padding:6px 12px;" onclick="switchTab('deposits')">View All Deposits</button>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Method</th>
+                <th>Amount</th>
+                <th>Transaction ID (TrxID)</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardRecentDepositsBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">👥 Recently Registered Users</div>
+          <button class="btn-primary" style="font-size:12px; padding:6px 12px;" onclick="switchTab('users')">Manage Users</button>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Balance</th>
+                <th>Total Deposit</th>
+                <th>Joined</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardRecentUsersBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. DEPOSITS TAB -->
+    <section class="panel-section" id="tab-deposits">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">📥 All Deposit Requests</div>
+          <div class="filter-group">
+            <button class="filter-pill active" onclick="filterDeposits('all', this)">All</button>
+            <button class="filter-pill" onclick="filterDeposits('pending', this)">Pending</button>
+            <button class="filter-pill" onclick="filterDeposits('approved', this)">Approved</button>
+            <button class="filter-pill" onclick="filterDeposits('rejected', this)">Rejected</button>
+            <input type="text" class="search-input" id="searchDepositsInput" placeholder="Search TrxID, Phone, Name..." oninput="renderDepositsTable()">
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>User Details</th>
+                <th>Gateway</th>
+                <th>Amount</th>
+                <th>TrxID / Hash</th>
+                <th>Status</th>
+                <th>Admin Actions</th>
+              </tr>
+            </thead>
+            <tbody id="depositsTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. WITHDRAWALS TAB -->
+    <section class="panel-section" id="tab-withdrawals">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">📤 Withdrawal Requests</div>
+          <div class="filter-group">
+            <button class="filter-pill active" onclick="filterWithdrawals('all', this)">All</button>
+            <button class="filter-pill" onclick="filterWithdrawals('pending', this)">Pending</button>
+            <button class="filter-pill" onclick="filterWithdrawals('approved', this)">Approved</button>
+            <button class="filter-pill" onclick="filterWithdrawals('rejected', this)">Rejected</button>
+            <input type="text" class="search-input" id="searchWithdrawalsInput" placeholder="Search phone, name..." oninput="renderWithdrawalsTable()">
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>User</th>
+                <th>Method</th>
+                <th>Payout Account</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="withdrawalsTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. USERS TAB -->
+    <section class="panel-section" id="tab-users">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">👥 Registered Users Database</div>
+          <div class="filter-group">
+            <input type="text" class="search-input" id="searchUsersInput" placeholder="Search by name, phone..." oninput="renderUsersTable()">
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Phone</th>
+                <th>Current Balance</th>
+                <th>Total Deposit</th>
+                <th>Total Withdraw</th>
+                <th>Active Plan</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. GATEWAYS & ADDRESSES TAB -->
+    <section class="panel-section" id="tab-gateways">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-size:16px; font-weight:700;">Deposit Gateways & Numbers / Crypto Addresses</h3>
+        <button class="btn-primary" onclick="openAddGatewayModal()">+ Add New Payment Method</button>
+      </div>
+      <div class="gateways-grid" id="gatewaysGrid">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- 6. PLANS TAB -->
+    <section class="panel-section" id="tab-plans">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-size:16px; font-weight:700;">Task Packages & Investment Plans</h3>
+        <button class="btn-primary" onclick="openAddPlanModal()">+ Create New Plan</button>
+      </div>
+      <div class="gateways-grid" id="plansGrid">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- 7. SETTINGS TAB -->
+    <section class="panel-section" id="tab-settings">
+      <div class="table-card" style="max-width:700px; padding:24px;">
+        <h3 style="font-size:16px; font-weight:700; margin-bottom:20px;">App System Settings</h3>
+        
+        <div class="form-group">
+          <label class="form-label">App Name</label>
+          <input type="text" class="form-control" id="settingAppName">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Minimum Deposit (৳)</label>
+            <input type="number" class="form-control" id="settingMinDeposit">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Minimum Withdraw (৳)</label>
+            <input type="number" class="form-control" id="settingMinWithdraw">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Announcement / Notice Board Text</label>
+          <input type="text" class="form-control" id="settingNotice">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Home Banner Promo Line 1</label>
+          <input type="text" class="form-control" id="settingBannerSub1">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Home Banner Promo Line 2</label>
+          <input type="text" class="form-control" id="settingBannerSub2">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Support Phone</label>
+            <input type="text" class="form-control" id="settingSupportPhone">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Support Email</label>
+            <input type="text" class="form-control" id="settingSupportEmail">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Telegram Channel / Support URL</label>
+            <input type="text" class="form-control" id="settingTelegram">
+          </div>
+          <div class="form-group">
+            <label class="form-label">WhatsApp Number</label>
+            <input type="text" class="form-control" id="settingWhatsApp">
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="saveSystemSettings()">Save System Settings</button>
+      </div>
+    </section>
+
+    <!-- 8. ADMIN SECURITY & PASSWORD TAB -->
+    <section class="panel-section" id="tab-security">
+      <div class="wizard-card">
+        <div class="wizard-title">🔐 Admin Credentials & Security (Saved in Firebase)</div>
+        <div class="wizard-desc">
+          Update your Admin Username and Password here. Once saved, these credentials are automatically updated in Google Firebase Firestore, and you can log in with your updated credentials from anywhere.
+        </div>
+      </div>
+
+      <div class="table-card" style="max-width:560px; padding:24px;">
+        <h3 style="font-size:15px; font-weight:700; margin-bottom:16px;">Change Admin Username & Password</h3>
+        
+        <form onsubmit="handleUpdateAdminCredentials(event)">
+          <div class="form-group">
+            <label class="form-label">Current Admin Password <span style="color:var(--danger);">*</span></label>
+            <input type="password" class="form-control" id="secCurrentPassword" required placeholder="Enter current password">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">New Admin Username <span style="color:var(--danger);">*</span></label>
+            <input type="text" class="form-control" id="secNewUsername" required placeholder="e.g. master_admin">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">New Admin Password <span style="color:var(--danger);">*</span></label>
+            <input type="password" class="form-control" id="secNewPassword" required placeholder="Enter at least 6 characters">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirm New Password <span style="color:var(--danger);">*</span></label>
+            <input type="password" class="form-control" id="secConfirmPassword" required placeholder="Re-enter new password">
+          </div>
+
+          <button type="submit" class="btn-primary" style="width:100%; padding:11px; margin-top:8px;">
+            Save & Update in Firebase
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 9. FIREBASE SETUP TAB -->
+    <section class="panel-section" id="tab-firebase">
+      <div class="wizard-card">
+        <div class="wizard-title">🔥 Google Firebase Live Connection Setup</div>
+        <div class="wizard-desc">
+          Connect your Google Firebase project to enable permanent cloud synchronization between this Admin Dashboard and all registered users. 
+          When connected, any user registration, deposit request, approval, plan purchase, and admin credentials are stored in Cloud Firestore in real time.
+        </div>
+      </div>
+
+      <div class="table-card" style="max-width:700px; padding:24px;">
+        <h3 style="font-size:15px; font-weight:700; margin-bottom:14px;">Option 1: Quick Paste Firebase Config Object</h3>
+        <div class="form-group">
+          <label class="form-label">Paste JSON or JS Config from Firebase Console</label>
+          <textarea class="form-control" id="fbConfigJson" rows="4" placeholder='{"apiKey": "AIzaSy...", "projectId": "task-wallet", ...}'></textarea>
+        </div>
+        <button class="btn-secondary" onclick="parseFirebaseConfigJson()">Parse & Fill Fields</button>
+
+        <hr style="margin:20px 0; border:none; border-top:1px solid var(--border);">
+
+        <h3 style="font-size:15px; font-weight:700; margin-bottom:14px;">Option 2: Individual Credentials Fields</h3>
+        <div class="form-group">
+          <label class="form-label">API Key (apiKey)</label>
+          <input type="text" class="form-control" id="fbApiKey" placeholder="AIzaSy...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Project ID (projectId)</label>
+          <input type="text" class="form-control" id="fbProjectId" placeholder="task-wallet-XXXX">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Auth Domain (authDomain)</label>
+          <input type="text" class="form-control" id="fbAuthDomain" placeholder="task-wallet-XXXX.firebaseapp.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Storage Bucket (storageBucket)</label>
+          <input type="text" class="form-control" id="fbStorageBucket" placeholder="task-wallet-XXXX.appspot.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Messaging Sender ID (messagingSenderId)</label>
+          <input type="text" class="form-control" id="fbMessagingId" placeholder="123456789">
+        </div>
+        <div class="form-group">
+          <label class="form-label">App ID (appId)</label>
+          <input type="text" class="form-control" id="fbAppId" placeholder="1:123456789:web:abcdef">
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button class="btn-primary" onclick="saveFirebaseCredentials()">Save & Connect Firebase</button>
+          <button class="btn-secondary" onclick="resetFirebaseConfig()">Reset to Simulation Mode</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- APPROVE DEPOSIT MODAL -->
+<div class="modal-overlay" id="modalApproveDeposit">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">✓ Approve Deposit Request</div>
+      <button class="modal-close" onclick="closeModal('modalApproveDeposit')">✕</button>
+    </div>
+    <div class="modal-body" id="modalApproveDepositBody">
+      <!-- Injected via JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalApproveDeposit')">Cancel</button>
+      <button class="btn-primary" style="background:var(--success);" id="confirmApproveDepBtn">Confirm & Credit Balance</button>
+    </div>
+  </div>
+</div>
+
+<!-- REJECT DEPOSIT MODAL -->
+<div class="modal-overlay" id="modalRejectDeposit">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">✕ Reject Deposit Request</div>
+      <button class="modal-close" onclick="closeModal('modalRejectDeposit')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13.5px; margin-bottom:14px; color:var(--slate);">
+        Are you sure you want to reject this deposit request? Please provide a reason for the user.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Rejection Reason</label>
+        <input type="text" class="form-control" id="rejectDepReasonInput" value="ভুল TrxID বা অ্যাকাউন্টে পেমেন্ট পাওয়া যায়নি।">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalRejectDeposit')">Cancel</button>
+      <button class="btn-primary" style="background:var(--danger);" id="confirmRejectDepBtn">Reject Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="modal-overlay" id="modalEditUser">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit User Details & Balance</div>
+      <button class="modal-close" onclick="closeModal('modalEditUser')">✕</button>
+    </div>
+    <div class="modal-body" id="modalEditUserBody">
+      <!-- Injected via JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalEditUser')">Cancel</button>
+      <button class="btn-primary" id="confirmSaveUserBtn">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT/ADD GATEWAY MODAL -->
+<div class="modal-overlay" id="modalGateway">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="gatewayModalTitle">Deposit Gateway</div>
+      <button class="modal-close" onclick="closeModal('modalGateway')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="gwId">
+      <div class="form-group">
+        <label class="form-label">Gateway Name (e.g., bKash, Nagad, USDT TRC20)</label>
+        <input type="text" class="form-control" id="gwName">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Account Type (Personal / Agent / Merchant / Crypto TRC20)</label>
+        <input type="text" class="form-control" id="gwType">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deposit Number / Wallet Address</label>
+        <input type="text" class="form-control" id="gwNumber">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Badge Text</label>
+        <input type="text" class="form-control" id="gwBadge">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Instructions for User</label>
+        <textarea class="form-control" id="gwInstructions" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Minimum Deposit for this gateway (৳)</label>
+        <input type="number" class="form-control" id="gwMinDeposit" value="500">
+      </div>
+      <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="gwIsActive" checked>
+        <label for="gwIsActive" style="font-size:13px; font-weight:600; cursor:pointer;">Active / Enabled</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalGateway')">Cancel</button>
+      <button class="btn-primary" onclick="saveGateway()">Save Gateway</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT/ADD PLAN MODAL -->
+<div class="modal-overlay" id="modalPlan">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="planModalTitle">Task Package / Plan</div>
+      <button class="modal-close" onclick="closeModal('modalPlan')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="planId">
+      <div class="form-group">
+        <label class="form-label">Plan Name</label>
+        <input type="text" class="form-control" id="planName">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <div class="form-group">
+          <label class="form-label">Price (৳)</label>
+          <input type="number" class="form-control" id="planPrice">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Validity (Days)</label>
+          <input type="number" class="form-control" id="planDays">
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <div class="form-group">
+          <label class="form-label">Ads / Tasks Per Day</label>
+          <input type="number" class="form-control" id="planAdsPerDay">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reward Per Task (৳)</label>
+          <input type="number" class="form-control" id="planRewardPerAd">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalPlan')">Cancel</button>
+      <button class="btn-primary" onclick="savePlanData()">Save Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toastIcon">✓</span>
+  <span id="toastMsg">Operation successful</span>
+</div>
+
+<script>
+let currentDepositsFilter = 'all';
+let currentWithdrawalsFilter = 'all';
+
+// Show Toast
+function showToast(msg, isError = false) {
+  const toast = document.getElementById('toast');
+  const icon = document.getElementById('toastIcon');
+  const txt = document.getElementById('toastMsg');
+  icon.textContent = isError ? '✕' : '✓';
+  txt.textContent = msg;
+  toast.style.background = isError ? '#dc2626' : '#0f172a';
+  toast.classList.add('show');
+  clearTimeout(window._toastT);
+  window._toastT = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// Check Admin Authentication on Load
+async function checkAdminAuth() {
+  const isLoggedIn = window.DB.isAdminLoggedIn();
+  const screen = document.getElementById('adminLoginScreen');
+  if (isLoggedIn) {
+    screen.style.display = 'none';
+    const creds = await window.DB.getAdminCredentials();
+    document.getElementById('headerAdminName').textContent = creds.username || 'admin';
+    document.getElementById('secNewUsername').value = creds.username || 'admin';
+  } else {
+    screen.style.display = 'flex';
+  }
+}
+
+// Handle Admin Login Submission
+async function handleAdminLogin(e) {
+  e.preventDefault();
+  const user = document.getElementById('inputAdminUser').value.trim();
+  const pass = document.getElementById('inputAdminPass').value;
+  const errEl = document.getElementById('adminLoginError');
+
+  errEl.style.display = 'none';
+  errEl.textContent = '';
+
+  try {
+    const session = await window.DB.loginAdmin({ username: user, password: pass });
+    document.getElementById('adminLoginScreen').style.display = 'none';
+    document.getElementById('headerAdminName').textContent = session.username;
+    document.getElementById('secNewUsername').value = session.username;
+    showToast(`Welcome Admin (${session.username})!`);
+    await refreshAllData();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function handleAdminLogout() {
+  window.DB.logoutAdmin();
+  document.getElementById('adminLoginScreen').style.display = 'flex';
+  document.getElementById('inputAdminPass').value = '';
+  showToast('Admin logged out successfully.');
+}
+
+async function handleUpdateAdminCredentials(e) {
+  e.preventDefault();
+  const currentPass = document.getElementById('secCurrentPassword').value;
+  const newUsername = document.getElementById('secNewUsername').value.trim();
+  const newPass = document.getElementById('secNewPassword').value;
+  const confirmPass = document.getElementById('secConfirmPassword').value;
+
+  if (newPass !== confirmPass) {
+    showToast('New passwords do not match!', true);
+    return;
+  }
+
+  try {
+    const updated = await window.DB.updateAdminCredentials({
+      currentPassword: currentPass,
+      newUsername,
+      newPassword: newPass
+    });
+    document.getElementById('headerAdminName').textContent = updated.username;
+    document.getElementById('secCurrentPassword').value = '';
+    document.getElementById('secNewPassword').value = '';
+    document.getElementById('secConfirmPassword').value = '';
+    showToast('Admin credentials successfully updated in Firebase!');
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// Switch Sidebar Tabs
+function switchTab(tabId) {
+  document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.panel-section').forEach(sec => sec.classList.remove('active'));
+
+  const btnMap = {
+    dashboard: 0, deposits: 1, withdrawals: 2, users: 3, gateways: 4, plans: 5, settings: 6, security: 7, firebase: 8
+  };
+  const btns = document.querySelectorAll('.sidebar-nav .nav-btn');
+  if (btns[btnMap[tabId]]) btns[btnMap[tabId]].classList.add('active');
+
+  const panel = document.getElementById('tab-' + tabId);
+  if (panel) panel.classList.add('active');
+
+  const titleMap = {
+    dashboard: 'Dashboard Overview',
+    deposits: 'Deposit Requests Management',
+    withdrawals: 'Withdrawal Requests Management',
+    users: 'Registered Users Database',
+    gateways: 'Deposit Gateways & Numbers',
+    plans: 'Task Packages & Investment Plans',
+    settings: 'App System Settings',
+    security: 'Admin Credentials & Security',
+    firebase: 'Google Firebase Connection'
+  };
+  document.getElementById('pageTitle').textContent = titleMap[tabId] || 'Admin Dashboard';
+
+  // Load data for active tab
+  if (tabId === 'dashboard' || tabId === 'deposits') renderDepositsTable();
+  if (tabId === 'dashboard' || tabId === 'users') renderUsersTable();
+  if (tabId === 'withdrawals') renderWithdrawalsTable();
+  if (tabId === 'gateways') renderGateways();
+  if (tabId === 'plans') renderPlans();
+  if (tabId === 'settings') loadSettingsForm();
+  if (tabId === 'firebase') loadFirebaseForm();
+  refreshStats();
+}
+
+// Modal Helpers
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// =========================================================================
+// DEPOSIT MANAGEMENT
+// =========================================================================
+function filterDeposits(filter, btn) {
+  currentDepositsFilter = filter;
+  document.querySelectorAll('#tab-deposits .filter-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderDepositsTable();
+}
+
+async function renderDepositsTable() {
+  const deposits = await window.DB.getAllDeposits();
+  const search = (document.getElementById('searchDepositsInput')?.value || '').toLowerCase().trim();
+
+  let filtered = deposits;
+  if (currentDepositsFilter !== 'all') {
+    filtered = filtered.filter(d => d.status === currentDepositsFilter);
+  }
+  if (search) {
+    filtered = filtered.filter(d => 
+      (d.trxId && d.trxId.toLowerCase().includes(search)) ||
+      (d.userPhone && d.userPhone.includes(search)) ||
+      (d.userName && d.userName.toLowerCase().includes(search)) ||
+      (d.method && d.method.toLowerCase().includes(search))
+    );
+  }
+
+  // Render main deposits table
+  const tbody = document.getElementById('depositsTableBody');
+  if (tbody) {
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--muted);">No deposit requests found.</td></tr>`;
+    } else {
+      tbody.innerHTML = filtered.map(d => {
+        const timeStr = new Date(d.createdAt).toLocaleString();
+        const gwClass = d.method.toLowerCase().includes('bkash') ? 'bkash' : (d.method.toLowerCase().includes('nagad') ? 'nagad' : (d.method.toLowerCase().includes('rocket') ? 'rocket' : 'usdt'));
+        const statusHtml = `<span class="status-tag ${d.status}">${d.status}</span>`;
+        
+        let actionButtons = '';
+        if (d.status === 'pending') {
+          actionButtons = `
+            <div class="btn-group">
+              <button class="action-btn-sm btn-approve" onclick="openApproveDepositModal('${d.id}')">✓ Approve</button>
+              <button class="action-btn-sm btn-reject" onclick="openRejectDepositModal('${d.id}')">✕ Reject</button>
+            </div>
+          `;
+        } else {
+          actionButtons = `<span style="color:var(--muted); font-size:12px;">Completed</span>`;
+        }
+
+        return `
+          <tr>
+            <td><span style="font-size:12px; color:var(--muted);">${timeStr}</span></td>
+            <td>
+              <strong>${d.userName || 'User'}</strong><br>
+              <span style="font-size:12px; color:var(--muted);">${d.userPhone}</span>
+            </td>
+            <td><span class="gateway-tag ${gwClass}">${d.method}</span></td>
+            <td><strong style="color:var(--primary); font-size:14px;">৳ ${parseFloat(d.amount).toLocaleString()}</strong></td>
+            <td>
+              <span style="font-family:monospace; background:#f1f5f9; padding:3px 8px; border-radius:4px; font-weight:700;">
+                ${d.trxId}
+              </span>
+            </td>
+            <td>${statusHtml}</td>
+            <td>${actionButtons}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  // Render recent deposits on Dashboard
+  const dashBody = document.getElementById('dashboardRecentDepositsBody');
+  if (dashBody) {
+    const pendings = deposits.filter(d => d.status === 'pending').slice(0, 5);
+    if (pendings.length === 0) {
+      dashBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--muted);">No pending deposit requests. All clear! 🎉</td></tr>`;
+    } else {
+      dashBody.innerHTML = pendings.map(d => `
+        <tr>
+          <td><strong>${d.userName}</strong> (${d.userPhone})</td>
+          <td>${d.method}</td>
+          <td><strong style="color:var(--primary);">৳ ${d.amount}</strong></td>
+          <td><code style="font-weight:700;">${d.trxId}</code></td>
+          <td>${new Date(d.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+          <td><span class="status-tag pending">PENDING</span></td>
+          <td>
+            <div class="btn-group">
+              <button class="action-btn-sm btn-approve" onclick="openApproveDepositModal('${d.id}')">✓ Approve</button>
+              <button class="action-btn-sm btn-reject" onclick="openRejectDepositModal('${d.id}')">✕ Reject</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  refreshStats();
+}
+
+let activeDepositActionId = null;
+
+async function openApproveDepositModal(depId) {
+  const deposits = await window.DB.getAllDeposits();
+  const dep = deposits.find(d => d.id === depId);
+  if (!dep) return;
+  activeDepositActionId = depId;
+
+  document.getElementById('modalApproveDepositBody').innerHTML = `
+    <div style="background:#f8fafc; border-radius:8px; padding:16px; margin-bottom:14px; font-size:13.5px;">
+      <div style="margin-bottom:6px;"><strong>User:</strong> ${dep.userName} (${dep.userPhone})</div>
+      <div style="margin-bottom:6px;"><strong>Payment Gateway:</strong> ${dep.method}</div>
+      <div style="margin-bottom:6px;"><strong>Deposit Amount:</strong> <span style="font-size:16px; font-weight:800; color:var(--primary);">৳ ${dep.amount}</span></div>
+      <div><strong>TrxID / Hash:</strong> <code style="font-weight:700; color:var(--slate);">${dep.trxId}</code></div>
+    </div>
+    <p style="font-size:13px; color:var(--muted);">
+      Clicking <strong>Confirm</strong> will immediately add <strong>৳ ${dep.amount}</strong> to the user's live balance in Firebase and mark the deposit as approved.
+    </p>
+  `;
+
+  document.getElementById('confirmApproveDepBtn').onclick = async () => {
+    try {
+      await window.DB.approveDeposit(depId);
+      closeModal('modalApproveDeposit');
+      showToast(`৳ ${dep.amount} deposit approved and credited to ${dep.userPhone}!`);
+      renderDepositsTable();
+      renderUsersTable();
+      refreshStats();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  };
+
+  openModal('modalApproveDeposit');
+}
+
+function openRejectDepositModal(depId) {
+  activeDepositActionId = depId;
+  document.getElementById('confirmRejectDepBtn').onclick = async () => {
+    const reason = document.getElementById('rejectDepReasonInput').value.trim();
+    try {
+      await window.DB.rejectDeposit(depId, reason);
+      closeModal('modalRejectDeposit');
+      showToast('Deposit request rejected.');
+      renderDepositsTable();
+      refreshStats();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  };
+  openModal('modalRejectDeposit');
+}
+
+// =========================================================================
+// WITHDRAWALS MANAGEMENT
+// =========================================================================
+function filterWithdrawals(filter, btn) {
+  currentWithdrawalsFilter = filter;
+  document.querySelectorAll('#tab-withdrawals .filter-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderWithdrawalsTable();
+}
+
+async function renderWithdrawalsTable() {
+  const list = await window.DB.getAllWithdrawals();
+  const search = (document.getElementById('searchWithdrawalsInput')?.value || '').toLowerCase().trim();
+
+  let filtered = list;
+  if (currentWithdrawalsFilter !== 'all') {
+    filtered = filtered.filter(w => w.status === currentWithdrawalsFilter);
+  }
+  if (search) {
+    filtered = filtered.filter(w => 
+      (w.userPhone && w.userPhone.includes(search)) ||
+      (w.targetAccount && w.targetAccount.includes(search)) ||
+      (w.userName && w.userName.toLowerCase().includes(search))
+    );
+  }
+
+  const tbody = document.getElementById('withdrawalsTableBody');
+  if (!tbody) return;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--muted);">No withdrawal requests found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(w => {
+    let actions = '';
+    if (w.status === 'pending') {
+      actions = `
+        <div class="btn-group">
+          <button class="action-btn-sm btn-approve" onclick="approveWithdrawalAction('${w.id}')">✓ Approve</button>
+          <button class="action-btn-sm btn-reject" onclick="rejectWithdrawalAction('${w.id}')">✕ Reject & Refund</button>
+        </div>
+      `;
+    } else {
+      actions = `<span style="font-size:12px; color:var(--muted);">${w.status.toUpperCase()}</span>`;
+    }
+
+    return `
+      <tr>
+        <td><span style="font-size:12px; color:var(--muted);">${new Date(w.createdAt).toLocaleString()}</span></td>
+        <td><strong>${w.userName}</strong><br><span style="font-size:12px; color:var(--muted);">${w.userPhone}</span></td>
+        <td><span class="gateway-tag bkash">${w.method}</span></td>
+        <td><strong>${w.targetAccount}</strong></td>
+        <td><strong style="color:var(--danger); font-size:14px;">৳ ${parseFloat(w.amount).toLocaleString()}</strong></td>
+        <td><span class="status-tag ${w.status}">${w.status}</span></td>
+        <td>${actions}</td>
+      </tr>
+    `;
+  }).join('');
+
+  refreshStats();
+}
+
+async function approveWithdrawalAction(id) {
+  if (confirm('Approve this withdrawal payout?')) {
+    try {
+      await window.DB.approveWithdrawal(id);
+      showToast('Withdrawal marked as approved.');
+      renderWithdrawalsTable();
+      refreshStats();
+    } catch (e) {
+      showToast(e.message, true);
+    }
+  }
+}
+
+async function rejectWithdrawalAction(id) {
+  const reason = prompt('Enter rejection reason (User will be refunded):', 'ভুল অ্যাকাউন্ট নম্বর বা উইথড্র তথ্য।');
+  if (reason !== null) {
+    try {
+      await window.DB.rejectWithdrawal(id, reason);
+      showToast('Withdrawal rejected and amount refunded to user balance.');
+      renderWithdrawalsTable();
+      renderUsersTable();
+      refreshStats();
+    } catch (e) {
+      showToast(e.message, true);
+    }
+  }
+}
+
+// =========================================================================
+// USERS MANAGEMENT
+// =========================================================================
+async function renderUsersTable() {
+  const usersObj = await window.DB.getAllUsers();
+  const users = Object.values(usersObj);
+  const search = (document.getElementById('searchUsersInput')?.value || '').toLowerCase().trim();
+
+  let filtered = users;
+  if (search) {
+    filtered = filtered.filter(u => 
+      (u.name && u.name.toLowerCase().includes(search)) ||
+      (u.phone && u.phone.includes(search))
+    );
+  }
+
+  const tbody = document.getElementById('usersTableBody');
+  if (tbody) {
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--muted);">No registered users found.</td></tr>`;
+    } else {
+      tbody.innerHTML = filtered.map(u => {
+        const bal = parseFloat(u.balance) || 0;
+        const totalDep = parseFloat(u.totalDeposit) || 0;
+        const totalWd = parseFloat(u.totalWithdraw) || 0;
+        const statusTag = `<span class="status-tag ${u.status || 'active'}">${(u.status || 'active').toUpperCase()}</span>`;
+
+        return `
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:32px; height:32px; border-radius:50%; background:#dbeafe; color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700;">
+                  ${(u.name || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <strong>${u.name || 'User'}</strong><br>
+                  <span style="font-size:11px; color:var(--muted); font-family:monospace;">${u.referCode || ''}</span>
+                </div>
+              </div>
+            </td>
+            <td><strong>${u.phone}</strong></td>
+            <td><strong style="color:var(--success); font-size:14px;">৳ ${bal.toFixed(2)}</strong></td>
+            <td>৳ ${totalDep.toFixed(2)}</td>
+            <td>৳ ${totalWd.toFixed(2)}</td>
+            <td>${u.activePlan || '<span style="color:var(--muted);">None</span>'}</td>
+            <td><span style="font-size:12px; color:var(--muted);">${new Date(u.joinedAt || Date.now()).toLocaleDateString()}</span></td>
+            <td>${statusTag}</td>
+            <td>
+              <div class="btn-group">
+                <button class="action-btn-sm btn-edit" onclick="openEditUserModal('${u.phone}')">✏️ Edit</button>
+                <button class="action-btn-sm ${u.status === 'banned' ? 'btn-approve' : 'btn-reject'}" onclick="toggleUserBan('${u.phone}')">
+                  ${u.status === 'banned' ? 'Activate' : 'Ban'}
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  // Dashboard recent users
+  const dashUsers = document.getElementById('dashboardRecentUsersBody');
+  if (dashUsers) {
+    const recent = [...users].reverse().slice(0, 5);
+    dashUsers.innerHTML = recent.map(u => `
+      <tr>
+        <td><strong>${u.name}</strong></td>
+        <td>${u.phone}</td>
+        <td><strong style="color:var(--success);">৳ ${(parseFloat(u.balance)||0).toFixed(2)}</strong></td>
+        <td>৳ ${(parseFloat(u.totalDeposit)||0).toFixed(2)}</td>
+        <td>${new Date(u.joinedAt || Date.now()).toLocaleDateString()}</td>
+        <td><span class="status-tag ${u.status||'active'}">${(u.status||'active').toUpperCase()}</span></td>
+      </tr>
+    `).join('');
+  }
+
+  refreshStats();
+}
+
+async function openEditUserModal(phone) {
+  const user = await window.DB.getUser(phone);
+  if (!user) return;
+
+  const body = document.getElementById('modalEditUserBody');
+  body.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input type="text" class="form-control" id="editUserName" value="${user.name || ''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number (Read-only ID)</label>
+      <input type="text" class="form-control" id="editUserPhone" value="${user.phone}" readonly style="background:#f1f5f9;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Current Balance (৳)</label>
+      <input type="number" step="0.01" class="form-control" id="editUserBalance" value="${parseFloat(user.balance)||0}">
+      <div class="form-hint">You can directly adjust or credit/debit user balance here.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Active Plan</label>
+      <input type="text" class="form-control" id="editUserPlan" value="${user.activePlan || ''}" placeholder="e.g. Standard, Pro">
+    </div>
+    <div class="form-group">
+      <label class="form-label">User Status</label>
+      <select class="form-control" id="editUserStatus">
+        <option value="active" ${user.status==='active'?'selected':''}>Active</option>
+        <option value="banned" ${user.status==='banned'?'selected':''}>Banned / Suspended</option>
+      </select>
+    </div>
+  `;
+
+  document.getElementById('confirmSaveUserBtn').onclick = async () => {
+    const name = document.getElementById('editUserName').value.trim();
+    const balance = parseFloat(document.getElementById('editUserBalance').value) || 0;
+    const activePlan = document.getElementById('editUserPlan').value.trim() || null;
+    const status = document.getElementById('editUserStatus').value;
+
+    try {
+      await window.DB.updateUser(phone, { name, balance, activePlan, status });
+      closeModal('modalEditUser');
+      showToast(`User ${phone} updated successfully!`);
+      renderUsersTable();
+      refreshStats();
+    } catch (e) {
+      showToast(e.message, true);
+    }
+  };
+
+  openModal('modalEditUser');
+}
+
+async function toggleUserBan(phone) {
+  const user = await window.DB.getUser(phone);
+  if (!user) return;
+  const newStatus = user.status === 'banned' ? 'active' : 'banned';
+  if (confirm(`Are you sure you want to change status of ${user.name} (${phone}) to ${newStatus.toUpperCase()}?`)) {
+    await window.DB.updateUser(phone, { status: newStatus });
+    showToast(`User status updated to ${newStatus}.`);
+    renderUsersTable();
+  }
+}
+
+// =========================================================================
+// GATEWAYS & DEPOSIT NUMBERS
+// =========================================================================
+async function renderGateways() {
+  const list = await window.DB.getPaymentMethods();
+  const grid = document.getElementById('gatewaysGrid');
+  if (!grid) return;
+
+  grid.innerHTML = list.map(gw => `
+    <div class="gateway-item">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span class="gateway-tag ${gw.name.toLowerCase().includes('bkash')?'bkash':(gw.name.toLowerCase().includes('nagad')?'nagad':'usdt')}">
+            ${gw.name} (${gw.type || 'Personal'})
+          </span>
+          <span class="status-tag ${gw.isActive !== false ? 'active':'rejected'}">
+            ${gw.isActive !== false ? 'ACTIVE':'DISABLED'}
+          </span>
+        </div>
+        <div style="margin:10px 0;">
+          <div style="font-size:11px; color:var(--muted); text-transform:uppercase;">Deposit Address / Number:</div>
+          <div style="font-size:15px; font-weight:800; color:var(--dark); font-family:monospace; word-break:break-all; margin-top:2px;">
+            ${gw.number}
+          </div>
+        </div>
+        <div style="font-size:12px; color:var(--slate); margin-top:6px;">
+          ${gw.instructions || 'Send money to this account.'}
+        </div>
+        <div style="font-size:11.5px; color:var(--muted); margin-top:6px;">
+          Min Deposit: ৳ ${gw.minDeposit || 500}
+        </div>
+      </div>
+      <div class="btn-group" style="margin-top:10px;">
+        <button class="action-btn-sm btn-edit" onclick="openEditGatewayModal('${gw.id}')">✏️ Edit Number / Address</button>
+        <button class="action-btn-sm btn-reject" onclick="deleteGateway('${gw.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openAddGatewayModal() {
+  document.getElementById('gatewayModalTitle').textContent = 'Add New Deposit Gateway';
+  document.getElementById('gwId').value = '';
+  document.getElementById('gwName').value = '';
+  document.getElementById('gwType').value = 'Personal';
+  document.getElementById('gwNumber').value = '';
+  document.getElementById('gwBadge').value = '';
+  document.getElementById('gwInstructions').value = 'Send Money to the above number, then submit TrxID.';
+  document.getElementById('gwMinDeposit').value = '500';
+  document.getElementById('gwIsActive').checked = true;
+  openModal('modalGateway');
+}
+
+async function openEditGatewayModal(id) {
+  const list = await window.DB.getPaymentMethods();
+  const gw = list.find(g => g.id === id);
+  if (!gw) return;
+
+  document.getElementById('gatewayModalTitle').textContent = 'Edit ' + gw.name;
+  document.getElementById('gwId').value = gw.id;
+  document.getElementById('gwName').value = gw.name;
+  document.getElementById('gwType').value = gw.type || 'Personal';
+  document.getElementById('gwNumber').value = gw.number;
+  document.getElementById('gwBadge').value = gw.badge || gw.name.toUpperCase();
+  document.getElementById('gwInstructions').value = gw.instructions || '';
+  document.getElementById('gwMinDeposit').value = gw.minDeposit || 500;
+  document.getElementById('gwIsActive').checked = gw.isActive !== false;
+  openModal('modalGateway');
+}
+
+async function saveGateway() {
+  const id = document.getElementById('gwId').value;
+  const name = document.getElementById('gwName').value.trim();
+  const type = document.getElementById('gwType').value.trim();
+  const number = document.getElementById('gwNumber').value.trim();
+  const badge = document.getElementById('gwBadge').value.trim() || name.toUpperCase();
+  const instructions = document.getElementById('gwInstructions').value.trim();
+  const minDeposit = parseFloat(document.getElementById('gwMinDeposit').value) || 500;
+  const isActive = document.getElementById('gwIsActive').checked;
+
+  if (!name || !number) {
+    showToast('Name and Deposit Address are required.', true);
+    return;
+  }
+
+  const payload = {
+    id: id || 'pm_' + Date.now(),
+    name, type, number, badge, instructions, minDeposit, isActive
+  };
+
+  await window.DB.savePaymentMethod(payload);
+  closeModal('modalGateway');
+  showToast('Deposit Gateway saved successfully!');
+  renderGateways();
+}
+
+async function deleteGateway(id) {
+  if (confirm('Delete this deposit gateway?')) {
+    await window.DB.deletePaymentMethod(id);
+    showToast('Gateway deleted.');
+    renderGateways();
+  }
+}
+
+// =========================================================================
+// PLANS MANAGEMENT
+// =========================================================================
+async function renderPlans() {
+  const list = await window.DB.getPlans();
+  const grid = document.getElementById('plansGrid');
+  if (!grid) return;
+
+  grid.innerHTML = list.map(p => {
+    const daily = p.adsPerDay * p.rewardPerAd;
+    const maxPot = p.days * daily;
+
+    return `
+      <div class="gateway-item">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong style="font-size:16px;">${p.name} Plan</strong>
+            <span class="status-tag active">৳ ${p.price.toLocaleString()}</span>
+          </div>
+          <div style="font-size:12.5px; color:var(--slate); line-height:1.6; margin:10px 0;">
+            <div>📅 Validity: <strong>${p.days} Days</strong></div>
+            <div>📋 Daily Tasks: <strong>${p.adsPerDay} Ads/day</strong></div>
+            <div>🪙 Reward / Ad: <strong>৳ ${p.rewardPerAd}</strong></div>
+            <div style="color:var(--primary); font-weight:700; margin-top:4px;">
+              Daily Earning: ৳ ${daily.toLocaleString()}
+            </div>
+            <div style="font-size:11.5px; color:var(--muted);">
+              Max Potential: ৳ ${maxPot.toLocaleString()}
+            </div>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="action-btn-sm btn-edit" onclick="openEditPlanModal('${p.id}')">✏️ Edit Plan</button>
+          <button class="action-btn-sm btn-reject" onclick="deletePlanAction('${p.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openAddPlanModal() {
+  document.getElementById('planModalTitle').textContent = 'Create New Task Plan';
+  document.getElementById('planId').value = '';
+  document.getElementById('planName').value = '';
+  document.getElementById('planPrice').value = '1000';
+  document.getElementById('planDays').value = '60';
+  document.getElementById('planAdsPerDay').value = '5';
+  document.getElementById('planRewardPerAd').value = '100';
+  openModal('modalPlan');
+}
+
+async function openEditPlanModal(id) {
+  const list = await window.DB.getPlans();
+  const p = list.find(item => item.id === id);
+  if (!p) return;
+
+  document.getElementById('planModalTitle').textContent = 'Edit ' + p.name + ' Plan';
+  document.getElementById('planId').value = p.id;
+  document.getElementById('planName').value = p.name;
+  document.getElementById('planPrice').value = p.price;
+  document.getElementById('planDays').value = p.days;
+  document.getElementById('planAdsPerDay').value = p.adsPerDay;
+  document.getElementById('planRewardPerAd').value = p.rewardPerAd;
+  openModal('modalPlan');
+}
+
+async function savePlanData() {
+  const id = document.getElementById('planId').value;
+  const name = document.getElementById('planName').value.trim();
+  const price = parseFloat(document.getElementById('planPrice').value) || 0;
+  const days = parseInt(document.getElementById('planDays').value) || 1;
+  const adsPerDay = parseInt(document.getElementById('planAdsPerDay').value) || 1;
+  const rewardPerAd = parseFloat(document.getElementById('planRewardPerAd').value) || 0;
+
+  if (!name || price <= 0) {
+    showToast('Please enter a valid plan name and price.', true);
+    return;
+  }
+
+  await window.DB.savePlan({
+    id: id || 'plan_' + Date.now(),
+    name, price, days, adsPerDay, rewardPerAd, isActive: true
+  });
+
+  closeModal('modalPlan');
+  showToast('Plan saved successfully!');
+  renderPlans();
+}
+
+async function deletePlanAction(id) {
+  if (confirm('Delete this plan?')) {
+    await window.DB.deletePlan(id);
+    showToast('Plan deleted.');
+    renderPlans();
+  }
+}
+
+// =========================================================================
+// SYSTEM SETTINGS
+// =========================================================================
+async function loadSettingsForm() {
+  const s = await window.DB.getSettings();
+  document.getElementById('settingAppName').value = s.appName || 'Task Wallet';
+  document.getElementById('settingMinDeposit').value = s.minDeposit || 500;
+  document.getElementById('settingMinWithdraw').value = s.minWithdraw || 500;
+  document.getElementById('settingNotice').value = s.noticeText || '';
+  document.getElementById('settingBannerSub1').value = s.bannerSub1 || '';
+  document.getElementById('settingBannerSub2').value = s.bannerSub2 || '';
+  document.getElementById('settingSupportPhone').value = s.supportPhone || '';
+  document.getElementById('settingSupportEmail').value = s.supportEmail || '';
+  document.getElementById('settingTelegram').value = s.supportTelegram || '';
+  document.getElementById('settingWhatsApp').value = s.supportWhatsApp || '';
+}
+
+async function saveSystemSettings() {
+  const s = {
+    appName: document.getElementById('settingAppName').value.trim(),
+    minDeposit: parseFloat(document.getElementById('settingMinDeposit').value) || 500,
+    minWithdraw: parseFloat(document.getElementById('settingMinWithdraw').value) || 500,
+    noticeText: document.getElementById('settingNotice').value.trim(),
+    bannerSub1: document.getElementById('settingBannerSub1').value.trim(),
+    bannerSub2: document.getElementById('settingBannerSub2').value.trim(),
+    supportPhone: document.getElementById('settingSupportPhone').value.trim(),
+    supportEmail: document.getElementById('settingSupportEmail').value.trim(),
+    supportTelegram: document.getElementById('settingTelegram').value.trim(),
+    supportWhatsApp: document.getElementById('settingWhatsApp').value.trim()
+  };
+
+  await window.DB.saveSettings(s);
+  showToast('App Settings updated and synced with User App!');
+}
+
+// =========================================================================
+// FIREBASE CONFIGURATION
+// =========================================================================
+function loadFirebaseForm() {
+  const cfg = window.FIREBASE_CONFIG || {};
+  document.getElementById('fbApiKey').value = cfg.apiKey || '';
+  document.getElementById('fbProjectId').value = cfg.projectId || '';
+  document.getElementById('fbAuthDomain').value = cfg.authDomain || '';
+  document.getElementById('fbStorageBucket').value = cfg.storageBucket || '';
+  document.getElementById('fbMessagingId').value = cfg.messagingSenderId || '';
+  document.getElementById('fbAppId').value = cfg.appId || '';
+}
+
+function parseFirebaseConfigJson() {
+  const raw = document.getElementById('fbConfigJson').value.trim();
+  if (!raw) return;
+  try {
+    let cleaned = raw.replace(/^[^{]*/, '').replace(/[^}]*$/, '');
+    let jsonStr = cleaned.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":').replace(/'/g, '"');
+    const parsed = JSON.parse(jsonStr);
+
+    if (parsed.apiKey) document.getElementById('fbApiKey').value = parsed.apiKey;
+    if (parsed.projectId) document.getElementById('fbProjectId').value = parsed.projectId;
+    if (parsed.authDomain) document.getElementById('fbAuthDomain').value = parsed.authDomain;
+    if (parsed.storageBucket) document.getElementById('fbStorageBucket').value = parsed.storageBucket;
+    if (parsed.messagingSenderId) document.getElementById('fbMessagingId').value = parsed.messagingSenderId;
+    if (parsed.appId) document.getElementById('fbAppId').value = parsed.appId;
+
+    showToast('Firebase config fields populated!');
+  } catch (e) {
+    showToast('Invalid JSON format. Please fill the fields manually.', true);
+  }
+}
+
+async function saveFirebaseCredentials() {
+  const config = {
+    apiKey: document.getElementById('fbApiKey').value.trim(),
+    projectId: document.getElementById('fbProjectId').value.trim(),
+    authDomain: document.getElementById('fbAuthDomain').value.trim(),
+    storageBucket: document.getElementById('fbStorageBucket').value.trim(),
+    messagingSenderId: document.getElementById('fbMessagingId').value.trim(),
+    appId: document.getElementById('fbAppId').value.trim()
+  };
+
+  if (!config.apiKey || !config.projectId) {
+    showToast('API Key and Project ID are required!', true);
+    return;
+  }
+
+  localStorage.setItem('TW_FIREBASE_CONFIG', JSON.stringify(config));
+  window.FIREBASE_CONFIG = config;
+
+  const connected = await window.DB.initFirebase();
+  if (connected) {
+    window.DB.setupFirestoreRealtimeListeners();
+    updateFirebaseBadge(true, config.projectId);
+    showToast('🟢 Connected to Google Firebase Firestore!');
+  } else {
+    showToast('Could not connect to Firebase. Check API keys or rules.', true);
+  }
+}
+
+function resetFirebaseConfig() {
+  localStorage.removeItem('TW_FIREBASE_CONFIG');
+  window.FIREBASE_CONFIG = { apiKey: '', authDomain: '', projectId: '' };
+  updateFirebaseBadge(false);
+  loadFirebaseForm();
+  showToast('Reset to Simulation Mode (Local DB).');
+}
+
+function updateFirebaseBadge(connected, projectId = '') {
+  const badge = document.getElementById('firebaseStatusBadge');
+  const txt = document.getElementById('firebaseStatusText');
+  if (connected) {
+    badge.className = 'firebase-status-badge connected';
+    txt.textContent = 'Firebase Connected: ' + projectId;
+  } else {
+    badge.className = 'firebase-status-badge simulation';
+    txt.textContent = 'Simulation Mode (Local DB)';
+  }
+}
+
+// =========================================================================
+// REFRESH STATS
+// =========================================================================
+async function refreshStats() {
+  const deposits = await window.DB.getAllDeposits();
+  const withdrawals = await window.DB.getAllWithdrawals();
+  const usersObj = await window.DB.getAllUsers();
+  const users = Object.values(usersObj);
+
+  const pendingDeps = deposits.filter(d => d.status === 'pending');
+  const approvedDeps = deposits.filter(d => d.status === 'approved');
+  const pendingWds = withdrawals.filter(w => w.status === 'pending');
+
+  const pendingDepSum = pendingDeps.reduce((acc, d) => acc + (parseFloat(d.amount) || 0), 0);
+  const approvedDepSum = approvedDeps.reduce((acc, d) => acc + (parseFloat(d.amount) || 0), 0);
+  const pendingWdSum = pendingWds.reduce((acc, w) => acc + (parseFloat(w.amount) || 0), 0);
+
+  document.getElementById('statPendingDepositsCount').textContent = pendingDeps.length;
+  document.getElementById('statPendingDepositsAmount').textContent = '৳ ' + pendingDepSum.toLocaleString();
+  
+  document.getElementById('statTotalUsers').textContent = users.length;
+  document.getElementById('statTotalApprovedDeposits').textContent = '৳ ' + approvedDepSum.toLocaleString();
+  document.getElementById('statApprovedDepCount').textContent = approvedDeps.length + ' approved';
+
+  document.getElementById('statPendingWithdrawalsCount').textContent = pendingWds.length;
+  document.getElementById('statPendingWithdrawalsAmount').textContent = '৳ ' + pendingWdSum.toLocaleString();
+
+  // Badges
+  const depBadge = document.getElementById('pendingDepBadge');
+  if (depBadge) {
+    depBadge.textContent = pendingDeps.length;
+    depBadge.style.display = pendingDeps.length > 0 ? 'inline-block' : 'none';
+  }
+  const wdBadge = document.getElementById('pendingWdBadge');
+  if (wdBadge) {
+    wdBadge.textContent = pendingWds.length;
+    wdBadge.style.display = pendingWds.length > 0 ? 'inline-block' : 'none';
+  }
+}
+
+async function refreshAllData() {
+  await renderDepositsTable();
+  await renderUsersTable();
+  await renderWithdrawalsTable();
+  await renderGateways();
+  await renderPlans();
+  await refreshStats();
+}
+
+// Global Event Listeners for Live Sync
+window.DB.subscribe('connectionStatus', (status) => {
+  updateFirebaseBadge(status.connected, status.projectId);
+});
+
+window.DB.subscribe('depositCreated', () => {
+  showToast('🔔 New Deposit Request submitted by user!');
+  renderDepositsTable();
+});
+
+window.DB.subscribe('userRegistered', () => {
+  showToast('👤 New User registered!');
+  renderUsersTable();
+});
+
+window.DB.subscribe('withdrawalCreated', () => {
+  showToast('💸 New Withdrawal Request submitted!');
+  renderWithdrawalsTable();
+});
+
+// Initialization on DOM Ready
+document.addEventListener('DOMContentLoaded', async () => {
+  await checkAdminAuth();
+  await refreshAllData();
+
+  if (window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.projectId) {
+    updateFirebaseBadge(true, window.FIREBASE_CONFIG.projectId);
+  }
+});
+</script>
+</body>
+</html>
